@@ -22,9 +22,13 @@ import logging
 from timeit_decorator import timeit
 
 # Configure logging
-logging.basicConfig(level=logging.CRITICAL)
-
-@timeit(runs=5, workers=2, log_level=logging.CRITICAL)
+logging.basicConfig(level=logging.INFO)
+# Default parameters :
+# - runs: int = 1,
+# - workers: int = 1,
+# - log_level: int = logging.INFO,
+# - use_multiprocessing: bool = False
+@timeit()
 def sample_function():
     # Function implementation
 ```
