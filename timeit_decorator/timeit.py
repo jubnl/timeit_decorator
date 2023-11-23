@@ -61,6 +61,18 @@ def timeit(runs: int = 1, workers: int = 1, log_level: int = logging.INFO, use_m
             if runs < 1 or workers < 1:
                 raise ValueError("Both runs and workers must be at least 1")
 
+            if runs == 1 and workers == 1:
+                # Directly execute the function if only a single run with one worker
+                start_time = time.time()
+                result = func(*args, **kwargs)
+                end_time = time.time()
+                execution_time = end_time - start_time
+
+                logger = logging.getLogger()
+                logger.setLevel(log_level)
+                logger.log(log_level, f"Function {func.__name__} executed once in {execution_time} seconds.")
+                return result
+
             worker_args = [(func, args, kwargs) for _ in range(runs)]
 
             if use_multiprocessing:
