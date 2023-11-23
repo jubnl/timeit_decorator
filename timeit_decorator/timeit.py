@@ -78,9 +78,8 @@ def timeit(runs: int = 1, workers: int = 1, log_level: int = logging.INFO, use_m
 
             logger = logging.getLogger()
             logger.setLevel(log_level)
-            logger.log(log_level, f"Function {func.__name__} executed {runs} times with {workers} workers.")
-            logger.log(log_level, f"Average Time: {avg_time} seconds")
-            logger.log(log_level, f"Median Time: {med_time} seconds")
+            logger.log(log_level, f"Function {func.__name__} executed {runs} times with {workers} workers. Average"
+                                  f" Time: {avg_time} seconds Median Time: {med_time} seconds")
 
             return results[0][1] if results else None
 
