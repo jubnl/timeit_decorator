@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='timeit_decorator',
-    version='1.0.2',
+    version='1.0.3',
     author='jubnl',
     author_email='jgunther021@gmail.com',
     packages=find_packages(),

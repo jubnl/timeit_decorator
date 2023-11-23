@@ -3,6 +3,9 @@
 ## Overview
 `timeit_decorator` is a Python package providing a versatile decorator for timing the execution of functions. It supports executing functions multiple times, in parallel, and can use either threading or multiprocessing depending on the nature of the task.
 
+## Efficient Execution for Single Run/Worker
+The decorator is optimized for scenarios where both runs and workers are set to 1. In such cases, it bypasses the overhead of setting up a pool and directly executes the function, which is more efficient for single-run executions.
+
 ## Logging Instead of Printing
 The `timeit_decorator` outputs timing information exclusively through Python's logging framework, rather than printing directly to the console. This approach offers more flexibility and control, allowing users to customize the output format, level, and destination. It integrates seamlessly with your application's logging configuration.
 
@@ -15,7 +18,7 @@ pip install timeit-decorator
 
 ## Usage
 ### Basic Usage
-Here's a simple example of how to use the timeit decorator, including how it integrates with Python's logging system:
+Here's how to use the timeit decorator:
 
 ```py
 import logging
@@ -23,16 +26,34 @@ from timeit_decorator import timeit
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
-# Default parameters :
-# - runs: int = 1,
-# - workers: int = 1,
-# - log_level: int = logging.INFO,
-# - use_multiprocessing: bool = False
-@timeit()
+
+@timeit(runs=5, workers=2, log_level=logging.INFO)
 def sample_function():
     # Function implementation
+    pass
+
+# Call the decorated function
+sample_function()
 ```
-In this example, the timeit decorator will log the execution time of sample_function using Python's logging framework.
+
+### Efficient Execution for Single Run/Worker
+For single executions, the decorator directly runs the function:
+```py
+import logging
+from timeit_decorator import timeit
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+
+# Default parameters
+# @timeit(runs=1, workers=1, log_level=logging.INFO, use_multiprocessing=False)
+@timeit()
+def quick_function():
+    # Function implementation for a quick task
+    pass
+
+quick_function()
+```
 
 ### Using Multiprocessing
 For CPU-bound tasks, you can enable multiprocessing:
@@ -44,9 +65,12 @@ from timeit_decorator import timeit
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
 
-@timeit(runs=10, workers=4, log_level=logging.DEBUG, use_multiprocessing=True)
+@timeit(runs=10, workers=4, use_multiprocessing=True, log_level=logging.DEBUG)
 def cpu_intensive_function():
     # CPU-bound function implementation
+    pass
+
+cpu_intensive_function()
 ```
 
 ### Using Threading (Default)
@@ -59,9 +83,12 @@ from timeit_decorator import timeit
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 
-@timeit(runs=5, workers=2, log_level=logging.INFO)
+@timeit(runs=5, workers=2)
 def io_bound_function():
     # I/O-bound function implementation
+    pass
+
+io_bound_function()
 ```
 
 ## Features
@@ -77,4 +104,4 @@ def io_bound_function():
 Contributions to `timeit_decorator` are welcome! Please read our [contributing guidelines](./CONTRIBUTING.md) for more details.
 
 ## License
-`timeit_decorator` is released under the MIT License.
+`timeit_decorator` is released under the [MIT License](./LICENSE).
