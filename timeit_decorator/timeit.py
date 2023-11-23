@@ -50,7 +50,7 @@ def timeit(runs: int = 1, workers: int = 1, log_level: int = logging.INFO, use_m
         def cpu_intensive_function(n):
             # Function implementation
 
-        @timeit(runs=5, workers=2, log_level=logging.INFO)
+        @timeit(runs=5, workers=2)
         def io_bound_function(n):
             # Function implementation
     """
