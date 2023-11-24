@@ -62,6 +62,30 @@ def io_bound_function(n):
     return n
 
 
+def sample_function(a, b):
+    time.sleep(0.1)
+    return a + b
+
+
+class SampleClass:
+    @staticmethod
+    @timeit(use_multiprocessing=False, runs=2, workers=2)
+    def sample_static_method(a, b):
+        time.sleep(0.1)
+        return a + b
+
+    @classmethod
+    @timeit(use_multiprocessing=True, runs=2, workers=2)
+    def sample_class_method(cls, a, b):
+        time.sleep(0.1)
+        return a + b
+
+    @timeit(use_multiprocessing=True, runs=2, workers=2)
+    def sample_instance_method(self, a, b):
+        time.sleep(0.1)
+        return a + b
+
+
 def test_multiple_workers_multiple_runs():
     result = multiple_workers_multiple_runs(0.1)
     assert result == 0.1
@@ -229,5 +253,41 @@ def test_switching_multiprocessing_mode():
     assert decorated_func_threading(0) == "thread"
 
 
-if __name__ == '__main__':
-    unittest.main()
+def test_regular_function():
+    # Test the decorator on a regular function
+    decorated_func = timeit(runs=2, workers=1)(sample_function)
+    assert decorated_func(1, 2) == 3
+
+
+def test_static_method():
+    # Test the decorator on a static method
+    assert SampleClass.sample_static_method(1, 2) == 3
+
+
+def test_class_method():
+    # Test the decorator on a class method
+    assert SampleClass.sample_class_method(1, 2) == 3
+
+
+def test_instance_method():
+    # Test the decorator on an instance method
+    instance = SampleClass()
+    assert instance.sample_instance_method(1, 2) == 3
+
+
+def test_single_run():
+    # Test the decorator with a single run
+    decorated_func = timeit(runs=1, workers=1)(sample_function)
+    assert decorated_func(1, 2) == 3
+
+
+def test_multiple_runs():
+    # Test the decorator with multiple runs
+    decorated_func = timeit(runs=3, workers=1)(sample_function)
+    assert decorated_func(1, 2) == 3
+
+
+def test_multiprocessing():
+    # Test the decorator with multiprocessing
+    decorated_func = timeit(use_multiprocessing=True, runs=2, workers=2)(sample_function)
+    assert decorated_func(1, 2) == 3

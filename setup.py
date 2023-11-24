@@ -2,11 +2,13 @@ from setuptools import setup, find_packages
 
 setup(
     name='timeit_decorator',
-    version='1.0.4',
+    version='1.1.0',
     author='jubnl',
     author_email='jgunther021@gmail.com',
     packages=find_packages(),
-    install_requires=[],
+    install_requires=[
+        "tabulate>=0.9.0"
+    ],
     description='A versatile timing decorator',
     long_description=open('README.md').read(),
     long_description_content_type='text/markdown',
