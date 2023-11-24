@@ -1,11 +1,13 @@
-from setuptools import setup, find_packages
+from setuptools import setup
 
 setup(
     name='timeit_decorator',
-    version='1.1.0',
+    version='1.1.1',
     author='jubnl',
     author_email='jgunther021@gmail.com',
-    packages=find_packages(),
+    packages=[
+        "timeit_decorator"
+    ],
     install_requires=[
         "tabulate>=0.9.0"
     ],
