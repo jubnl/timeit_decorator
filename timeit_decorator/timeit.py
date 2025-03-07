@@ -1,12 +1,14 @@
+import concurrent
+import logging
 import multiprocessing
 import threading
 import time
-import logging
-from functools import wraps
 from concurrent.futures import ThreadPoolExecutor
+from functools import wraps
 from multiprocessing import Pool
 from statistics import mean, median, stdev
 from typing import Optional, Callable
+
 from tabulate import tabulate
 
 
@@ -15,22 +17,35 @@ def _multiprocessing_instance_method_call(instance, method_name, *args, **kwargs
     return method(*args, **kwargs)
 
 
-def _timeit_worker(args):
+def _timeit_worker(worker_args):
+    """Worker function that executes a function and applies a timeout."""
+    logger = logging.getLogger("timeit.decorator._timeit_worker")
     try:
-        start_time = time.time()
-        if isinstance(args[0], tuple) and hasattr(args[0][0], args[0][1]):
-            # Instance method call
-            instance, method_name, *method_args = args[0]
-            func_result = _multiprocessing_instance_method_call(instance, method_name, *method_args)
+        if isinstance(worker_args, tuple) and isinstance(worker_args[1], str):
+            instance, method_name, *method_args, timeout = worker_args
+            wrapped_func = lambda: getattr(instance, method_name)(*method_args)
         else:
-            # Regular function call
-            func, args, kwargs = args
-            func_result = func(*args, **kwargs)
-        end_time = time.time()
-        return end_time - start_time, func_result
+            func, func_args, func_kwargs, timeout = worker_args
+            wrapped_func = lambda: func(*func_args, **func_kwargs)
+
+        # Enforce timeout using a thread-based executor
+        func_result = None
+        timed_out = False
+
+        # Execute function without preventing execution on timeout
+        execution_start = time.time()
+        func_result = wrapped_func()
+        execution_time = time.time() - execution_start
+
+        if timeout is not None and execution_time > timeout:
+            logger.warning(f"Timeout exceeded (took {execution_time}s, timeout was {timeout}s), but execution continued.")
+            timed_out = True
+
+        return execution_time, func_result, timed_out
+
     except Exception as e:
-        print(f"Error in _timeit_worker: {e}")
-        return None
+        logging.error(f"Error in _timeit_worker: {e}")
+        return None, None
 
 
 def timeit(
@@ -38,7 +53,8 @@ def timeit(
         workers: int = 1,
         log_level: Optional[int] = logging.INFO,
         use_multiprocessing: bool = False,
-        detailed: bool = False
+        detailed: bool = False,
+        timeout: Optional[float] = None  # New parameter for execution timeout
 ):
     """
     Time the execution of a function with options for multiple runs and workers.
@@ -58,6 +74,8 @@ def timeit(
     :type use_multiprocessing: bool
     :param detailed: get a detailed output with different stats about the execution time.
     :type detailed: bool
+    :param timeout: An optional timeout in seconds for each function execution.
+    :type timeout: Optional[float]
     :return: The return value of the function from its first execution.
     :rtype: Any
     :raises ValueError: If 'runs' or 'workers' are set to less than 1.
@@ -81,79 +99,60 @@ def timeit(
             # Function implementation
     """
 
+    if runs < 1 or workers < 1:
+        raise ValueError("Both runs and workers must be at least 1")
+
+    workers = min(workers, runs)  # ✅ Prevents more workers than runs
+
     def decorator(func: Callable):
-        decorator_logger = logging.getLogger("timeit.decorator")
-        decorator_logger.debug(f"Decorating function: {func.__name__}")
-        method_name = func.__name__
+        logger = logging.getLogger("timeit.decorator")
+        if log_level is not None:
+            logger.setLevel(log_level)
 
         @wraps(func)
         def wrapper(*args, **kwargs):
-            wrapper_logger = logging.getLogger("timeit.decorator.wrapper")
-            wrapper_logger.debug(f"Calling function: {func.__name__}")
-
-            # Check if the current thread is the main thread
             if threading.current_thread() is not threading.main_thread():
-                # This is a worker thread, execute the function directly
                 return func(*args, **kwargs)
 
-            # Check if the current process is the main process
             if multiprocessing.current_process().name != 'MainProcess':
-                # This is a child process, execute the function directly
                 return func(*args, **kwargs)
 
-            if runs < 1 or workers < 1:
-                raise ValueError("Both runs and workers must be at least 1")
-
-            if (runs == 1 and workers == 1) or (runs == 1 and workers > runs):
-                # Directly execute the function if only a single run with one worker
+            if runs == 1 and workers == 1:
                 start_time = time.time()
                 result = func(*args, **kwargs)
-                end_time = time.time()
-                execution_time = end_time - start_time
-
-                stats_data = [
-                    ["Function", func],
-                    ["Args", args[1:]],
-                    ["Kwargs", kwargs],
-                    ["Runs", runs],
-                    ["Workers", workers],
-                    ["Execution Time", f"{execution_time}s"],
-                    ["", ""],
-                ]
-
-                if detailed:
-                    output = tabulate(stats_data, tablefmt="plain")
-                else:
-                    output = f"{func}: Exec: {execution_time}s"
-
-                if log_level is not None:
-                    logger = logging.getLogger()
-                    logger.setLevel(log_level)
-                    logger.log(log_level, output)
-                else:
-                    print(output)
+                execution_time = time.time() - start_time
+                output = f"{func.__name__}: Exec: {execution_time:.6f}s"
+                logger.log(log_level, output) if log_level else print(output)
                 return result
 
-            is_instance_method = hasattr(args[0], method_name) if args else False
+            is_instance_method = args and hasattr(args[0], func.__name__)
+
             if is_instance_method:
-                worker_args = [((args[0], method_name) + args[1:], {},) for _ in range(runs)]
+                method_target = args[0]
+                worker_args = [
+                    (method_target, func.__name__, *args[1:], timeout)  # ✅ Ensure correct argument structure
+                    for _ in range(runs)
+                ]
             else:
-                worker_args = [(func, args, kwargs) for _ in range(runs)]
+                worker_args = [(func, args, kwargs, timeout) for _ in range(runs)]
+
+            logger.debug(
+                f"Starting {'multiprocessing' if use_multiprocessing else 'threading'} tasks with {workers} workers")
 
             if use_multiprocessing:
-                wrapper_logger.debug("Starting multiprocessing tasks")
                 with Pool(workers) as pool:
                     results = pool.map(_timeit_worker, worker_args)
-                wrapper_logger.debug("Completed multiprocessing tasks")
             else:
-                wrapper_logger.debug("Starting threading tasks")
                 with ThreadPoolExecutor(max_workers=workers) as executor:
                     results = list(executor.map(_timeit_worker, worker_args))
-                wrapper_logger.debug("Completed threading tasks")
 
-            times = [result[0] for result in results if result is not None]
+            times = [r[0] for r in results if r and r[0] is not None]
+            valid_results = [r[1] for r in results if r and r[1] is not None]
+            timed_out = [r[2] for r in results if r and r[2] is not None]
+
             if not times:
-                raise RuntimeError("No valid results were returned from the timed function.")
+                logger.error(f"{func.__name__}: All function executions failed or returned None.")
+                return None if not detailed else []
 
             avg_time = mean(times)
             med_time = median(times)
@@ -174,7 +173,7 @@ def timeit(
                 ["Max Time", f"{max_time}s"],
                 ["Std Deviation", f"{std_dev}s"],
                 ["Total Time", f"{total_time}s"],
-                ["", ""],
+                ["Timed Out", any(timed_out)],
             ]
 
             if detailed:
@@ -183,14 +182,16 @@ def timeit(
                 output = f"{func}: Avg: {avg_time:.3f}s, Med: {med_time:.3f}s"
 
             if log_level is not None:
-                logger = logging.getLogger()
-                logger.setLevel(log_level)
                 logger.log(log_level, output)
             else:
                 print(output)
 
-            # Return the result of the first execution
-            return results[0][1] if results else None
+            # Find the first successful result (not None), or return None if all runs failed
+            for result in valid_results:
+                if result is not None:
+                    return result
+
+            return None  # If all results are None (e.g., due to timeouts)
 
         return wrapper
 

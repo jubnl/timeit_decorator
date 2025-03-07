@@ -42,7 +42,11 @@ import logging
 from timeit_decorator import timeit
 
 # Configure logging
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] (%(name)s) %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S"
+)
 
 
 @timeit(runs=5, workers=2, log_level=logging.INFO)
@@ -175,6 +179,41 @@ Remember that enabling detailed output can increase the verbosity of the output,
 multiple times. It is recommended to use this feature judiciously based on the specific needs of performance analysis or
 debugging.
 
+### Timeout Handling
+
+The timeit decorator includes a timeout mechanism to monitor execution time without stopping the function. If the
+execution time exceeds the specified timeout, the decorator logs a warning but allows the function to complete.
+
+#### Usage Example
+
+```python
+import logging
+from timeit_decorator import timeit
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+
+
+@timeit(timeout=0.1, log_level=logging.WARNING)
+def slow_function():
+    import time
+    time.sleep(0.2)  # Simulate a slow function
+
+
+slow_function()
+```
+
+#### Behavior
+
+- If the function executes within the timeout, it completes normally.
+- If the function exceeds the timeout, a warning is logged:
+
+```log
+WARNING: Timeout exceeded (took 0.205s, timeout was 0.1s), but execution continued.
+```
+
+The function result is still returned even if the timeout is exceeded.
+
 ## Features
 
 - **Multiple Runs and Workers**: Execute the function multiple times in parallel for more accurate timing.
@@ -228,7 +267,7 @@ limitations, please feel free to report them in the project's issue tracker.
 
 ## Requirements
 
-`timeit_decorator` requires Python 3.x.
+`timeit_decorator` requires Python 3.7+
 
 ## Contributing
 

@@ -1,9 +1,16 @@
-import unittest
 import time
 
 import pytest
 
 from timeit_decorator import timeit
+
+import logging
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] (%(name)s) %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S"
+)
 
 
 def cpu_bound_function(n):
@@ -84,6 +91,10 @@ class SampleClass:
     def sample_instance_method(self, a, b):
         time.sleep(0.1)
         return a + b
+
+def slow_cpu_task():
+    time.sleep(0.2)  # Exceeds timeout
+    return "should timeout"
 
 
 def test_multiple_workers_multiple_runs():
@@ -291,3 +302,35 @@ def test_multiprocessing():
     # Test the decorator with multiprocessing
     decorated_func = timeit(use_multiprocessing=True, runs=2, workers=2)(sample_function)
     assert decorated_func(1, 2) == 3
+
+def test_timeout_exceeded():
+    @timeit(timeout=0.1)
+    def slow_function():
+        time.sleep(0.2)
+        return "completed"
+
+    result = slow_function()
+    assert result == "completed"
+
+def test_timeout_not_exceeded():
+    @timeit(timeout=0.3)
+    def fast_function():
+        time.sleep(0.1)  # Within timeout
+        return "completed"
+
+    result = fast_function()
+    assert result == "completed"  # Should complete successfully
+
+def test_timeout_with_multiple_runs():
+    @timeit(runs=3, timeout=0.15)
+    def sometimes_slow(i):
+        time.sleep(0.1 if i % 2 == 0 else 0.2)  # Some executions exceed timeout
+        return i
+
+    results = sometimes_slow(1)
+    assert results == 1
+
+def test_timeout_with_multiprocessing():
+    decorated_func = timeit(runs=2, workers=2, timeout=0.1, use_multiprocessing=True)(slow_cpu_task)
+    result = decorated_func()
+    assert result == "should timeout"

@@ -39,13 +39,21 @@ class TimeItTestClass:
     def timeit_multithreading_detailed(self, a: int, b: int = 2):
         time.sleep(random.randint(a, b))
 
+    @timeit(log_level=logging.INFO, timeout=0.1, detailed=True, runs=5)
+    def timeit_timeout(self):
+        time.sleep(0.5)
+
     @timeit(log_level=logging.INFO, runs=5, workers=5)
     def test_function(self, a: int, b: int = 2):
         print(f"Executing test_function with args: {a}, {b}")
 
 
 if __name__ == '__main__':
-    logging.basicConfig(level=logging.INFO)
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s [%(levelname)s] (%(name)s) %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S"
+    )
     testClass = TimeItTestClass()
     testClass.timeit_detailed(1)
     testClass.timeit_simple(2, b=4)
@@ -56,3 +64,4 @@ if __name__ == '__main__':
     testClass.timeit_multiprocessing_detailed(1, 2)
     testClass.timeit_multithreading_detailed(1)
     testClass.test_function(1)
+    testClass.timeit_timeout()
