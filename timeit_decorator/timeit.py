@@ -121,7 +121,15 @@ def timeit(
                 start_time = time.time()
                 result = func(*args, **kwargs)
                 execution_time = time.time() - start_time
-                output = f"{func.__name__}: Exec: {execution_time:.6f}s"
+                if detailed:
+                    output = tabulate([
+                        ["Function", func],
+                        ["Args", args[1:]],
+                        ["Kwargs", kwargs],
+                        ["Duration", f"{execution_time}s"]
+                    ], tablefmt="plain")
+                else:
+                    output = f"{func.__name__}: Exec: {execution_time:.6f}s"
                 logger.log(log_level, output) if log_level else print(output)
                 return result
 
@@ -161,22 +169,21 @@ def timeit(
             std_dev = stdev(times) if len(times) > 1 else 0
             total_time = sum(times)
 
-            stats_data = [
-                ["Function", func],
-                ["Args", args[1:]],
-                ["Kwargs", kwargs],
-                ["Runs", runs],
-                ["Workers", workers],
-                ["Average Time", f"{avg_time}s"],
-                ["Median Time", f"{med_time}s"],
-                ["Min Time", f"{min_time}s"],
-                ["Max Time", f"{max_time}s"],
-                ["Std Deviation", f"{std_dev}s"],
-                ["Total Time", f"{total_time}s"],
-                ["Timed Out", any(timed_out)],
-            ]
-
             if detailed:
+                stats_data = [
+                    ["Function", func],
+                    ["Args", args[1:]],
+                    ["Kwargs", kwargs],
+                    ["Runs", runs],
+                    ["Workers", workers],
+                    ["Average Time", f"{avg_time}s"],
+                    ["Median Time", f"{med_time}s"],
+                    ["Min Time", f"{min_time}s"],
+                    ["Max Time", f"{max_time}s"],
+                    ["Std Deviation", f"{std_dev}s"],
+                    ["Total Time", f"{total_time}s"],
+                    ["Timed Out", any(timed_out)],
+                ]
                 output = tabulate(stats_data, tablefmt="plain")
             else:
                 output = f"{func}: Avg: {avg_time:.3f}s, Med: {med_time:.3f}s"
