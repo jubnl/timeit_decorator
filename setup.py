@@ -13,7 +13,7 @@ else:
 
 setup(
     name='timeit_decorator',
-    version='2.0.0',
+    version='2.0.1',
     author='jubnl',
     license='MIT',
     author_email='jgunther021@gmail.com',
