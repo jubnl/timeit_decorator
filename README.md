@@ -7,7 +7,7 @@
 [![Python versions](https://img.shields.io/pypi/pyversions/timeit-decorator.svg)](https://pypi.org/project/timeit-decorator/)
 [![Build](https://img.shields.io/github/actions/workflow/status/jubnl/timeit_decorator/.github%2Fworkflows%2Fpython-publish.yml)](https://github.com/jubnl/timeit_decorator/actions/workflows/python-publish.yml)
 [![codecov](https://codecov.io/gh/jubnl/timeit_decorator/graph/badge.svg?token=7KGVJM29YP)](https://codecov.io/gh/jubnl/timeit_decorator)
-![GitHub Issues or Pull Requests](https://img.shields.io/github/issues/jubnl/timeit_decorator)
+[![GitHub Issues](https://img.shields.io/github/issues/jubnl/timeit_decorator)](https://github.com/jubnl/timeit_decorator/issues)
 ![GitHub Repo stars](https://img.shields.io/github/stars/jubnl/timeit_decorator)
 
 
