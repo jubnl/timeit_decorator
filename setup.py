@@ -13,7 +13,7 @@ else:
 
 setup(
     name='timeit_decorator',
-    version='2.0.1',
+    version='2.0.2',
     author='jubnl',
     license='MIT',
     author_email='jgunther021@gmail.com',
@@ -38,6 +38,7 @@ setup(
         'Programming Language :: Python :: 3.9',
         'Programming Language :: Python :: 3.10',
         'Programming Language :: Python :: 3.11',
+        'Programming Language :: Python :: 3.12',
         'License :: OSI Approved :: MIT License',
         'Operating System :: OS Independent',
     ],
