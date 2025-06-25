@@ -5,12 +5,10 @@
 [![PyPI Downloads](https://static.pepy.tech/badge/timeit-decorator/month)](https://pepy.tech/projects/timeit-decorator)
 [![PyPI version](https://badge.fury.io/py/timeit-decorator.svg)](https://pypi.org/project/timeit-decorator/)
 [![Python versions](https://img.shields.io/pypi/pyversions/timeit-decorator.svg)](https://pypi.org/project/timeit-decorator/)
-[![Build](https://github.com/jubnl/timeit-decorator/actions/workflows/python-publish.yml/badge.svg)](https://github.com/jubnl/timeit-decorator/actions)
-[![codecov](https://codecov.io/gh/jubnl/timeit-decorator/branch/main/graph/badge.svg)](https://codecov.io/gh/jubnl/timeit-decorator)
-[![GitHub issues](https://img.shields.io/github/issues/jubnl/timeit-decorator.svg)](https://github.com/jubnl/timeit-decorator/issues)
-[![GitHub pull requests](https://img.shields.io/github/issues-pr/jubnl/timeit-decorator.svg)](https://github.com/jubnl/timeit-decorator/pulls)
-![GitHub last commit](https://img.shields.io/github/last-commit/jubnl/timeit-decorator)
-![GitHub Repo stars](https://img.shields.io/github/stars/jubnl/timeit-decorator)
+[![Build](https://img.shields.io/github/actions/workflow/status/jubnl/timeit_decorator/.github%2Fworkflows%2Fpython-publish.yml)](https://github.com/jubnl/timeit_decorator/actions/workflows/python-publish.yml)
+[![codecov](https://codecov.io/gh/jubnl/timeit_decorator/graph/badge.svg?token=7KGVJM29YP)](https://codecov.io/gh/jubnl/timeit_decorator)
+![GitHub Issues or Pull Requests](https://img.shields.io/github/issues/jubnl/timeit_decorator)
+![GitHub Repo stars](https://img.shields.io/github/stars/jubnl/timeit_decorator)
 
 
 ## Overview
