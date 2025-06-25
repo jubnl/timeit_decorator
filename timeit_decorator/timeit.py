@@ -45,7 +45,7 @@ def _timeit_worker(worker_args):
 
     except Exception as e:
         logging.error(f"Error in _timeit_worker: {e}")
-        return None, None
+        return None, None, None
 
 
 def timeit(

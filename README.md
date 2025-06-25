@@ -158,15 +158,15 @@ def sample_function(a, b, c="some value"):
     pass
 
 
-sample_function("arg1", "arg2", key="value")
+sample_function("arg1", "arg2", c="value overwrite")
 ```
 
 This will output a detailed tabulated summary after the function execution, similar to the following:
 
 ```
-Function       sample_function
+Function       <function sample_function at 0x000002612FFD9E40>
 Args           ('arg1', 'arg2')
-Kwargs         {'key': 'value'}
+Kwargs         {'c': 'value overwrite'}
 Runs           5
 Workers        2
 Average Time   0.2s
