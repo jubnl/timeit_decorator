@@ -42,6 +42,11 @@ pip install timeit-decorator
 
 ## Usage
 
+#### Example Available
+
+You can find a runnable example in [examples/main.py](examples/main.py).
+The corresponding output is written to [examples/example_output.log](examples/example_output.log).
+
 ### Basic Usage
 
 Here's how to use the timeit decorator:

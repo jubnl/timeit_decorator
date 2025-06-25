@@ -1,0 +1,61 @@
+Function  <function TimeItTestClass.timeit_detailed at 0x000001AB37ABAD40>
+Args      (1,)
+Kwargs    {}
+Duration  1.00089430809021s
+timeit_simple: Exec: 2.000760s
+2025-06-25 06:12:28 [INFO] (timeit.decorator) Function  <function TimeItTestClass.timeit_detailed_logged at 0x000001AB3809A200>
+Args      (1, 3)
+Kwargs    {}
+Duration  3.0006253719329834s
+2025-06-25 06:12:31 [INFO] (timeit.decorator) timeit_simple_logged: Exec: 3.000809s
+<function TimeItTestClass.timeit_multiprocessing at 0x000001AB3809A480>: Avg: 1.401s, Med: 1.001s
+<function TimeItTestClass.timeit_multithreading at 0x000001AB3809A5C0>: Avg: 1.601s, Med: 2.001s
+Function       <function TimeItTestClass.timeit_multiprocessing_detailed at 0x000001AB3809A700>
+Args           (1, 2)
+Kwargs         {}
+Runs           5
+Workers        5
+Average Time   1.2004154205322266s
+Median Time    1.0004627704620361s
+Min Time       1.0002777576446533s
+Max Time       2.0004196166992188s
+Std Deviation  0.4472159484116437s
+Total Time     6.002077102661133s
+Timed Out      False
+2025-06-25 06:12:40 [INFO] (timeit.decorator) <function TimeItTestClass.test_function at 0x000001AB3809AAC0>: Avg: 0.000s, Med: 0.000s
+Function       <function TimeItTestClass.timeit_multithreading_detailed at 0x000001AB3809A840>
+Args           (1,)
+Kwargs         {}
+Runs           5
+Workers        5
+Average Time   1.8007994174957276s
+Median Time    2.000915765762329s
+Min Time       1.0008366107940674s
+Max Time       2.000915765762329s
+Std Deviation  0.4471928567679966s
+Total Time     9.003997087478638s
+Timed Out      False
+Executing test_function with args: 1, 2
+Executing test_function with args: 1, 2
+Executing test_function with args: 1, 2
+Executing test_function with args: 1, 2
+Executing test_function with args: 1, 2
+2025-06-25 06:12:40 [WARNING] (timeit.decorator._timeit_worker) Timeout exceeded (took 0.5008275508880615s, timeout was 0.1s), but execution continued.
+2025-06-25 06:12:41 [WARNING] (timeit.decorator._timeit_worker) Timeout exceeded (took 0.5005605220794678s, timeout was 0.1s), but execution continued.
+2025-06-25 06:12:41 [WARNING] (timeit.decorator._timeit_worker) Timeout exceeded (took 0.5010967254638672s, timeout was 0.1s), but execution continued.
+2025-06-25 06:12:42 [WARNING] (timeit.decorator._timeit_worker) Timeout exceeded (took 0.500892162322998s, timeout was 0.1s), but execution continued.
+2025-06-25 06:12:42 [WARNING] (timeit.decorator._timeit_worker) Timeout exceeded (took 0.5009870529174805s, timeout was 0.1s), but execution continued.
+2025-06-25 06:12:42 [INFO] (timeit.decorator) Function       <function TimeItTestClass.timeit_timeout at 0x000001AB3809A980>
+Args           ()
+Kwargs         {}
+Runs           5
+Workers        1
+Average Time   0.500872802734375s
+Median Time    0.500892162322998s
+Min Time       0.5005605220794678s
+Max Time       0.5010967254638672s
+Std Deviation  0.00020195062751733587s
+Total Time     2.504364013671875s
+Timed Out      True
+
+Process finished with exit code 0
