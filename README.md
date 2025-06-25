@@ -1,8 +1,8 @@
-[![PyPI Downloads](https://static.pepy.tech/badge/timeit-decorator)](https://pepy.tech/projects/timeit-decorator)
-[![PyPI Downloads](https://static.pepy.tech/badge/timeit-decorator/month)](https://pepy.tech/projects/timeit-decorator)
 # Timeit Decorator
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![PyPI Downloads](https://static.pepy.tech/badge/timeit-decorator)](https://pepy.tech/projects/timeit-decorator)
+[![PyPI Downloads](https://static.pepy.tech/badge/timeit-decorator/month)](https://pepy.tech/projects/timeit-decorator)
 
 ## Overview
 
