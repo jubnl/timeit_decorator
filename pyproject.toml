@@ -43,7 +43,8 @@ keywords = [
 [project.optional-dependencies]
 test = [
     "pytest",
-    "pytest-cov"
+    "pytest-cov",
+    "pytest-asyncio"
 ]
 
 [project.urls]
@@ -54,3 +55,7 @@ Issues = "https://github.com/jubnl/timeit_decorator/issues"
 
 [project.scripts]
 timeit_decorator = "timeit_decorator.__main__:main"
+
+[pytest]
+markers = "asyncio"
+
