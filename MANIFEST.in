@@ -1,0 +1,14 @@
+include LICENSE
+include README.md
+include pyproject.toml
+
+# Include all Python files in the actual package
+recursive-include timeit_decorator *.py
+
+# Include examples and tests in sdist (source archive), but NOT in wheel
+recursive-include examples *.py
+recursive-include tests *.py
+
+# Exclude examples/tests from final wheel
+prune examples
+prune tests

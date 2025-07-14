@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "timeit_decorator"
-version = "2.1.0"
+version = "2.1.1"
 description = "A versatile timing decorator"
 readme = "README.md"
 requires-python = ">=3.7"
@@ -59,3 +59,12 @@ timeit_decorator = "timeit_decorator.__main__:main"
 [pytest]
 markers = "asyncio"
 
+[tool.setuptools.packages.find]
+where = ["timeit_decorator"]
+
+[tool.setuptools.package-data]
+"*" = ["*.py"]
+
+[tool.setuptools.exclude-package-data]
+"tests" = ["*"]
+"examples" = ["*"]
