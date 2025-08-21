@@ -1,6 +1,6 @@
 # Timeit Decorator
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
+[![PyPI - License](https://img.shields.io/pypi/l/timeit_decorator)](./LICENSE)
 [![PyPI Downloads](https://static.pepy.tech/badge/timeit-decorator)](https://pepy.tech/projects/timeit-decorator)
 [![PyPI Downloads](https://static.pepy.tech/badge/timeit-decorator/month)](https://pepy.tech/projects/timeit-decorator)
 [![PyPI version](https://badge.fury.io/py/timeit-decorator.svg)](https://pypi.org/project/timeit-decorator/)
