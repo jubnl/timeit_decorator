@@ -60,7 +60,9 @@ jobs:
           file: junit.xml
 
       - name: Build package
-        run: python3 -m build
+        run: |
+          source .venv/bin/activate
+          python3 -m build
 
       - name: Publish package
         uses: pypa/gh-action-pypi-publish@release/v1
