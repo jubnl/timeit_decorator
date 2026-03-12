@@ -1,5 +1,7 @@
+import importlib
 import logging
 import multiprocessing
+import sys
 import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
@@ -20,11 +22,22 @@ def _timeit_worker(worker_args):
     """Worker function that executes a function and records execution time."""
     logger = logging.getLogger("timeit.decorator._timeit_worker")
     try:
-        # Distinguish between instance method and regular function
-        if isinstance(worker_args, tuple) and isinstance(worker_args[1], str):
+        if isinstance(worker_args[0], str):
+            # Module-level function referenced by module name + qualname (multiprocessing path).
+            # Looking up by name retrieves the wrapper, whose non-MainProcess short-circuit
+            # then calls through to the original function directly.
+            module_name, qualname, func_args, func_kwargs, timeout, enforce_timeout = worker_args
+            module = sys.modules.get(module_name) or importlib.import_module(module_name)
+            obj = module
+            for part in qualname.split('.'):
+                obj = getattr(obj, part)
+            wrapped_func = lambda: obj(*func_args, **func_kwargs)
+        elif isinstance(worker_args[1], str):
+            # Instance method referenced by name on its instance.
             instance, method_name, method_args, method_kwargs, timeout, enforce_timeout = worker_args
             wrapped_func = lambda: getattr(instance, method_name)(*method_args, **method_kwargs)
         else:
+            # Regular function object (threading path only).
             func, func_args, func_kwargs, timeout, enforce_timeout = worker_args
             wrapped_func = lambda: func(*func_args, **func_kwargs)
 
@@ -64,10 +77,16 @@ def _collect_threaded_results(futures, enforce_timeout, timeout, logger):
     return results
 
 
-def _build_worker_args(func, args, kwargs, runs, timeout, enforce_timeout):
+def _build_worker_args(func, args, kwargs, runs, timeout, enforce_timeout, use_multiprocessing=False):
     """Build per-run worker argument tuples."""
     if args and hasattr(args[0], func.__name__):
         return [(args[0], func.__name__, args[1:], kwargs, timeout, enforce_timeout) for _ in range(runs)]
+    if use_multiprocessing and '<locals>' not in func.__qualname__:
+        # Pass by module + qualname instead of function object to avoid PicklingError when the
+        # decorator syntax (@timeit_sync) replaces the module-level name with the wrapper.
+        # Only applicable to module-level functions; nested/local functions fall through to the
+        # function-object path (which may fail to pickle, matching pre-existing behaviour).
+        return [(func.__module__, func.__qualname__, args, kwargs, timeout, enforce_timeout) for _ in range(runs)]
     return [(func, args, kwargs, timeout, enforce_timeout) for _ in range(runs)]
 
 
@@ -117,7 +136,7 @@ def _sync_decorator(func, runs, workers, log_level, use_multiprocessing, detaile
         if runs == 1 and workers == 1:
             return _run_single_and_log(func, args, kwargs, log_level, detailed, timeout, enforce_timeout, logger)
 
-        worker_args = _build_worker_args(func, args, kwargs, runs, timeout, enforce_timeout)
+        worker_args = _build_worker_args(func, args, kwargs, runs, timeout, enforce_timeout, use_multiprocessing)
         results = _execute_parallel_runs(worker_args, workers, use_multiprocessing, enforce_timeout, timeout, logger)
 
         times = [r[0] for r in results if r and r[0] is not None]

@@ -102,6 +102,11 @@ def slow_cpu_task():
     return "should timeout"
 
 
+@timeit_sync(runs=2, workers=2, use_multiprocessing=True)
+def _mp_decorated_func():
+    return "ok"
+
+
 def test_multiple_workers_multiple_runs():
     result = multiple_workers_multiple_runs(0.1)
     assert result == 0.1
@@ -584,6 +589,11 @@ def test_sync_all_runs_fail():
 
 
 # --- multiprocessing + enforce_timeout raises ValueError ---
+
+def test_multiprocessing_decorator_syntax():
+    """@timeit_sync(use_multiprocessing=True) must not raise PicklingError."""
+    assert _mp_decorated_func() == "ok"
+
 
 def test_sync_enforce_timeout_with_multiprocessing_raises():
     with pytest.raises(ValueError, match="enforce_timeout"):

@@ -723,7 +723,7 @@ dependencies = [
     { name = "tabulate", version = "0.10.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
 ]
 
-[package.dev-dependencies]
+[package.optional-dependencies]
 dev = [
     { name = "pysonar" },
     { name = "pytest", version = "8.4.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
@@ -734,15 +734,14 @@ dev = [
 ]
 
 [package.metadata]
-requires-dist = [{ name = "tabulate", specifier = ">=0.9.0" }]
-
-[package.metadata.requires-dev]
-dev = [
-    { name = "pysonar", specifier = ">=1.3.0.4086" },
-    { name = "pytest" },
-    { name = "pytest-asyncio" },
-    { name = "pytest-cov" },
+requires-dist = [
+    { name = "pysonar", marker = "extra == 'dev'", specifier = ">=1.3.0.4086" },
+    { name = "pytest", marker = "extra == 'dev'" },
+    { name = "pytest-asyncio", marker = "extra == 'dev'" },
+    { name = "pytest-cov", marker = "extra == 'dev'" },
+    { name = "tabulate", specifier = ">=0.9.0" },
 ]
+provides-extras = ["dev"]
 
 [[package]]
 name = "tomli"
