@@ -1,65 +1,73 @@
+
 ------------------------------------------------------------
   1. Single run (fast path)
 ------------------------------------------------------------
-2026-03-12 12:49:16 [INFO] (timeit.decorator) single_run: Exec: 0.050158s
-2026-03-12 12:49:16 [DEBUG] (timeit.decorator) Starting threading tasks with 3 workers
+2026-03-12 23:52:07 [INFO] (timeit.decorator) single_run: Exec: 50.07ms
+2026-03-12 23:52:07 [DEBUG] (timeit.decorator) Starting threading tasks with 3 workers
   result: 42
 
 ------------------------------------------------------------
   2. Multiple runs — threading (runs=6, workers=3)
 ------------------------------------------------------------
-2026-03-12 12:49:17 [INFO] (timeit.decorator) threaded_runs: Avg: 0.100s, Med: 0.100s
-2026-03-12 12:49:17 [DEBUG] (timeit.decorator) Starting multiprocessing tasks with 4 workers
   result: 7
 
 ------------------------------------------------------------
   3. Multiple runs — multiprocessing @decorator syntax (runs=4, workers=4)
 ------------------------------------------------------------
-2026-03-12 12:49:17 [INFO] (timeit.decorator) cpu_bound: Avg: 0.010s, Med: 0.009s
-2026-03-12 12:49:17 [DEBUG] (timeit.decorator) Starting threading tasks with 3 workers
+2026-03-12 23:52:08 [INFO] (timeit.decorator) threaded_runs: Avg: 100.08ms, Med: 100.07ms
+2026-03-12 23:52:08 [DEBUG] (timeit.decorator) Starting multiprocessing tasks with 4 workers
   result: 124999750000
 
 ------------------------------------------------------------
   4. detailed=True output (runs=5, workers=3)
 ------------------------------------------------------------
+2026-03-12 23:52:08 [INFO] (timeit.decorator) cpu_bound: Avg: 10.12ms, Med: 8.80ms
+2026-03-12 23:52:08 [DEBUG] (timeit.decorator) Starting threading tasks with 3 workers
+2026-03-12 23:52:08 [INFO] (timeit.decorator) Function       __main__.detailed_output
+Args           (99,)
+Kwargs         {}
+Runs           5
+Workers        3
+Average Time   50.08ms
+Median Time    50.07ms
+Min Time       50.06ms
+Max Time       50.12ms
+Std Deviation  22.36µs
+Total Time     250.39ms
+Timed Out      False
+2026-03-12 23:52:08 [DEBUG] (timeit.decorator) Starting threading tasks with 1 workers
   result: 99
 
 ------------------------------------------------------------
   5. Timeout non-enforced — warns but lets function complete
 ------------------------------------------------------------
-2026-03-12 12:49:17 [INFO] (timeit.decorator) Function       <function detailed_output at 0x7bdc0cc1c5e0>
-Args           ()
-Kwargs         {}
-Runs           5
-Workers        3
-Average Time   0.050076770782470706s
-Median Time    0.050071001052856445s
-Min Time       0.05005621910095215s
-Max Time       0.05010700225830078s
-Std Deviation  1.8830087462039633e-05s
-Total Time     0.2503838539123535s
-Timed Out      False
-2026-03-12 12:49:17 [DEBUG] (timeit.decorator) Starting threading tasks with 1 workers
-2026-03-12 12:49:17 [WARNING] (timeit.decorator._timeit_worker) Timeout exceeded (took 0.1000833511352539s, timeout was 0.05s), but execution continued.
-2026-03-12 12:49:17 [WARNING] (timeit.decorator._timeit_worker) Timeout exceeded (took 0.10007047653198242s, timeout was 0.05s), but execution continued.
-2026-03-12 12:49:17 [WARNING] (timeit.decorator._timeit_worker) Timeout exceeded (took 0.10006284713745117s, timeout was 0.05s), but execution continued.
-2026-03-12 12:49:17 [INFO] (timeit.decorator) timeout_not_enforced: Avg: 0.100s, Med: 0.100s
-2026-03-12 12:49:17 [DEBUG] (timeit.decorator) Starting threading tasks with 4 workers
+2026-03-12 23:52:08 [WARNING] (timeit.decorator._timeit_worker) Timeout exceeded (took 0.10007071495056152s, timeout was 0.05s), but execution continued.
+2026-03-12 23:52:08 [WARNING] (timeit.decorator._timeit_worker) Timeout exceeded (took 0.10006856918334961s, timeout was 0.05s), but execution continued.
+2026-03-12 23:52:08 [WARNING] (timeit.decorator._timeit_worker) Timeout exceeded (took 0.1000673770904541s, timeout was 0.05s), but execution continued.
+2026-03-12 23:52:08 [INFO] (timeit.decorator) timeout_not_enforced: Avg: 100.07ms, Med: 100.07ms
+2026-03-12 23:52:08 [DEBUG] (timeit.decorator) Starting threading tasks with 4 workers
   result: 'completed despite timeout'
 
 ------------------------------------------------------------
   6. Timeout enforced — all cancelled (→ None)
 ------------------------------------------------------------
-2026-03-12 12:49:17 [WARNING] (timeit.decorator) Function execution 0 exceeded timeout of 0.05s and was canceled.
-2026-03-12 12:49:17 [WARNING] (timeit.decorator) Function execution 1 exceeded timeout of 0.05s and was canceled.
-2026-03-12 12:49:17 [WARNING] (timeit.decorator) Function execution 2 exceeded timeout of 0.05s and was canceled.
+2026-03-12 23:52:08 [WARNING] (timeit.decorator) Function execution 0 exceeded timeout of 0.05s and was canceled.
+2026-03-12 23:52:08 [WARNING] (timeit.decorator) Function execution 1 exceeded timeout of 0.05s and was canceled.
+2026-03-12 23:52:08 [WARNING] (timeit.decorator) Function execution 2 exceeded timeout of 0.05s and was canceled.
   result: 'should be cancelled'
 
 ------------------------------------------------------------
   7. Function returns None legitimately
 ------------------------------------------------------------
-2026-03-12 12:49:17 [INFO] (timeit.decorator) timeout_enforced: Avg: 0.088s, Med: 0.050s
-2026-03-12 12:49:17 [DEBUG] (timeit.decorator) Starting threading tasks with 1 workers
+2026-03-12 23:52:08 [INFO] (timeit.decorator) timeout_enforced: Avg: 87.51ms, Med: 50.00ms
+2026-03-12 23:52:08 [DEBUG] (timeit.decorator) Starting threading tasks with 1 workers
+2026-03-12 23:52:08 [INFO] (timeit.decorator) returns_none: Avg: 20.08ms, Med: 20.07ms
+2026-03-12 23:52:08 [DEBUG] (timeit.decorator) Starting threading tasks with 3 workers
+2026-03-12 23:52:08 [ERROR] (root) Error in _timeit_worker: intentional error
+2026-03-12 23:52:08 [ERROR] (root) Error in _timeit_worker: intentional error
+2026-03-12 23:52:08 [ERROR] (root) Error in _timeit_worker: intentional error
+2026-03-12 23:52:08 [ERROR] (timeit.decorator) always_raises: All function executions failed or returned None.
+2026-03-12 23:52:08 [DEBUG] (timeit.decorator) Starting multiprocessing tasks with 4 workers
   result: None
 
 ------------------------------------------------------------
@@ -70,20 +78,13 @@ Timed Out      False
 ------------------------------------------------------------
   9a. Instance method — multiprocessing
 ------------------------------------------------------------
+2026-03-12 23:52:08 [INFO] (timeit.decorator) compute: Avg: 14.64ms, Med: 16.06ms
+2026-03-12 23:52:08 [DEBUG] (timeit.decorator) Starting threading tasks with 4 workers
   result: 249999500001
 
 ------------------------------------------------------------
   9b. Instance method — threading
 ------------------------------------------------------------
-2026-03-12 12:49:17 [INFO] (timeit.decorator) returns_none: Avg: 0.020s, Med: 0.020s
-2026-03-12 12:49:17 [DEBUG] (timeit.decorator) Starting threading tasks with 3 workers
-2026-03-12 12:49:17 [ERROR] (root) Error in _timeit_worker: intentional error
-2026-03-12 12:49:17 [ERROR] (root) Error in _timeit_worker: intentional error
-2026-03-12 12:49:17 [ERROR] (root) Error in _timeit_worker: intentional error
-2026-03-12 12:49:17 [ERROR] (timeit.decorator) always_raises: All function executions failed or returned None.
-2026-03-12 12:49:17 [DEBUG] (timeit.decorator) Starting multiprocessing tasks with 4 workers
-2026-03-12 12:49:17 [INFO] (timeit.decorator) compute: Avg: 0.013s, Med: 0.013s
-2026-03-12 12:49:17 [DEBUG] (timeit.decorator) Starting threading tasks with 4 workers
   result: 10
 
 ------------------------------------------------------------
@@ -94,51 +95,51 @@ Timed Out      False
 ------------------------------------------------------------
   10. Async — single run
 ------------------------------------------------------------
-2026-03-12 12:49:17 [INFO] (timeit.decorator) io_task: Avg: 0.050s, Med: 0.050s
-2026-03-12 12:49:17 [WARNING] (timeit.decorator) enforce_timeout=True is ignored when runs=1 and workers=1 in sync mode — no parallelism or cancellation is possible.
-2026-03-12 12:49:17 [INFO] (timeit.decorator) single_run_enforce_warn: Exec: 0.000001s
-2026-03-12 12:49:17 [DEBUG] (asyncio) Using selector: EpollSelector
+2026-03-12 23:52:08 [INFO] (timeit.decorator) io_task: Avg: 50.07ms, Med: 50.06ms
+2026-03-12 23:52:08 [WARNING] (timeit.decorator) enforce_timeout=True is ignored when runs=1 and workers=1 in sync mode — no parallelism or cancellation is possible.
+2026-03-12 23:52:08 [INFO] (timeit.decorator) single_run_enforce_warn: Exec: 1.91µs
+2026-03-12 23:52:08 [DEBUG] (asyncio) Using selector: EpollSelector
   result: 'async done'
 
 ------------------------------------------------------------
   11. Async — multiple runs, detailed=True
 ------------------------------------------------------------
-2026-03-12 12:49:17 [INFO] (timeit.decorator) async_single: Exec: 0.050142s
+2026-03-12 23:52:08 [INFO] (timeit.decorator) async_single: Exec: 50.19ms
+2026-03-12 23:52:09 [INFO] (timeit.decorator) Function       __main__.async_multi
+Args           ()
+Kwargs         {}
+Runs           6
+Workers        3
+Average Time   50.17ms
+Median Time    50.18ms
+Min Time       50.15ms
+Max Time       50.19ms
+Std Deviation  19.07µs
+Total Time     301.04ms
+Timed Out      False
   result: 'async multi done'
 
 ------------------------------------------------------------
   12. Async timeout — non-enforced (completes late)
 ------------------------------------------------------------
-2026-03-12 12:49:18 [INFO] (timeit.decorator) Function       <function async_multi at 0x7bdc0cc1d120>
-Args           ()
-Kwargs         {}
-Runs           6
-Workers        3
-Average Time   0.05018043518066406s
-Median Time    0.05017983913421631s
-Min Time       0.050140380859375s
-Max Time       0.05022168159484863s
-Std Deviation  4.167403997419131e-05s
-Total Time     0.3010826110839844s
-Timed Out      False
-2026-03-12 12:49:18 [WARNING] (timeit.decorator) async_timeout_soft exceeded timeout of 0.05s but continued running.
-2026-03-12 12:49:18 [WARNING] (timeit.decorator) async_timeout_soft exceeded timeout of 0.05s but continued running.
-2026-03-12 12:49:18 [WARNING] (timeit.decorator) async_timeout_soft exceeded timeout of 0.05s but continued running.
-2026-03-12 12:49:18 [INFO] (timeit.decorator) async_timeout_soft: Avg: 0.050s, Med: 0.050s
+2026-03-12 23:52:09 [WARNING] (timeit.decorator) async_timeout_soft exceeded timeout of 0.05s but continued running.
+2026-03-12 23:52:09 [WARNING] (timeit.decorator) async_timeout_soft exceeded timeout of 0.05s but continued running.
+2026-03-12 23:52:09 [WARNING] (timeit.decorator) async_timeout_soft exceeded timeout of 0.05s but continued running.
+2026-03-12 23:52:09 [INFO] (timeit.decorator) async_timeout_soft: Avg: 50.27ms, Med: 50.26ms
   result: 'finished late'
 
 ------------------------------------------------------------
   13. Async timeout — enforced (all cancelled → None)
 ------------------------------------------------------------
-2026-03-12 12:49:18 [WARNING] (timeit.decorator) async_timeout_hard exceeded enforced timeout of 0.05s and was canceled.
-2026-03-12 12:49:18 [WARNING] (timeit.decorator) async_timeout_hard exceeded enforced timeout of 0.05s and was canceled.
-2026-03-12 12:49:18 [WARNING] (timeit.decorator) async_timeout_hard exceeded enforced timeout of 0.05s and was canceled.
-2026-03-12 12:49:18 [WARNING] (timeit.decorator) async_timeout_hard exceeded enforced timeout of 0.05s and was canceled.
-2026-03-12 12:49:18 [INFO] (timeit.decorator) async_timeout_hard: Avg: 0.050s, Med: 0.050s
-2026-03-12 12:49:18 [ERROR] (timeit.decorator) Error during async execution: async intentional error
-2026-03-12 12:49:18 [ERROR] (timeit.decorator) Error during async execution: async intentional error
-2026-03-12 12:49:18 [ERROR] (timeit.decorator) Error during async execution: async intentional error
-2026-03-12 12:49:18 [ERROR] (timeit.decorator) async_always_fails: All async function executions failed or returned None.
+2026-03-12 23:52:09 [WARNING] (timeit.decorator) async_timeout_hard exceeded enforced timeout of 0.05s and was canceled.
+2026-03-12 23:52:09 [WARNING] (timeit.decorator) async_timeout_hard exceeded enforced timeout of 0.05s and was canceled.
+2026-03-12 23:52:09 [WARNING] (timeit.decorator) async_timeout_hard exceeded enforced timeout of 0.05s and was canceled.
+2026-03-12 23:52:09 [WARNING] (timeit.decorator) async_timeout_hard exceeded enforced timeout of 0.05s and was canceled.
+2026-03-12 23:52:09 [INFO] (timeit.decorator) async_timeout_hard: Avg: 50.42ms, Med: 50.41ms
+2026-03-12 23:52:09 [ERROR] (timeit.decorator) Error during async execution: async intentional error
+2026-03-12 23:52:09 [ERROR] (timeit.decorator) Error during async execution: async intentional error
+2026-03-12 23:52:09 [ERROR] (timeit.decorator) Error during async execution: async intentional error
+2026-03-12 23:52:09 [ERROR] (timeit.decorator) async_always_fails: All async function executions failed or returned None.
   result: None
 
 ------------------------------------------------------------

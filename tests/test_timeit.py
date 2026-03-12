@@ -765,3 +765,37 @@ def test_detailed_multi_run_qualname(caplog):
         my_named_func()
     assert "my_named_func" in caplog.text
     assert "<function" not in caplog.text
+
+
+def test_detailed_args_shown_for_regular_function(caplog):
+    import logging
+    with caplog.at_level(logging.INFO, logger="timeit.decorator"):
+        @timeit_sync(detailed=True)
+        def my_func(a, b):
+            return a + b
+        my_func(1, 2)
+    assert "(1, 2)" in caplog.text
+
+
+def test_detailed_args_shown_for_multi_run(caplog):
+    import logging
+    with caplog.at_level(logging.INFO, logger="timeit.decorator"):
+        @timeit_sync(runs=3, detailed=True)
+        def my_func(a, b):
+            return a + b
+        my_func(3, 4)
+    assert "(3, 4)" in caplog.text
+
+
+def test_detailed_args_strips_self_for_instance_method(caplog):
+    import logging
+
+    class MyClass:
+        @timeit_sync(detailed=True)
+        def my_method(self, x):
+            return x
+
+    with caplog.at_level(logging.INFO, logger="timeit.decorator"):
+        MyClass().my_method(99)
+    assert "99" in caplog.text
+    assert "MyClass" not in caplog.text.split("Args")[1].split("\n")[0]

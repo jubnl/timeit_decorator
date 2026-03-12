@@ -40,13 +40,20 @@ class _NoResultType:
 _NO_RESULT = _NoResultType()
 
 
+def _display_args(func, args):
+    """Return args suitable for display, stripping self/cls for bound method calls."""
+    if args and hasattr(args[0], func.__name__):
+        return args[1:]
+    return args
+
+
 def _single_run_output(func, args, kwargs, duration, detailed):
     """Build log output for a single execution."""
     if not detailed:
         return f"{func.__name__}: Exec: {_fmt_duration(duration)}"
     return tabulate([
         ["Function", _func_qualname(func)],
-        ["Args", args[1:]],
+        ["Args", _display_args(func, args)],
         ["Kwargs", kwargs],
         ["Duration", _fmt_duration(duration)],
     ], tablefmt="plain")
@@ -60,7 +67,7 @@ def _multi_run_output(func, args, kwargs, runs, workers, times, results, detaile
         return f"{func.__name__}: Avg: {_fmt_duration(avg_time)}, Med: {_fmt_duration(med_time)}"
     stats_data = [
         ["Function", _func_qualname(func)],
-        ["Args", args[1:]],
+        ["Args", _display_args(func, args)],
         ["Kwargs", kwargs],
         ["Runs", runs],
         ["Workers", workers],
