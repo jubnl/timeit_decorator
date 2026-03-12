@@ -444,29 +444,108 @@ async def test_async_detailed_multiple_runs():
     assert await my_func() == "done"
 
 
-# --- deprecated @timeit dispatcher ---
+# --- @timeit auto-dispatcher ---
 
-def test_timeit_deprecated_sync():
+def test_timeit_sync():
     from timeit_decorator import timeit
 
-    with pytest.warns(DeprecationWarning):
-        @timeit()
-        def my_func():
-            return "sync"
+    @timeit()
+    def my_func():
+        return "sync"
 
     assert my_func() == "sync"
 
 
 @pytest.mark.asyncio
-async def test_timeit_deprecated_async():
+async def test_timeit_async():
     from timeit_decorator import timeit
 
-    with pytest.warns(DeprecationWarning):
-        @timeit()
+    @timeit()
+    async def my_func():
+        return "async"
+
+    assert await my_func() == "async"
+
+
+def test_timeit_multiple_runs():
+    from timeit_decorator import timeit
+
+    @timeit(runs=3, workers=2)
+    def my_func():
+        time.sleep(0.01)
+        return "done"
+
+    assert my_func() == "done"
+
+
+@pytest.mark.asyncio
+async def test_timeit_async_multiple_runs():
+    from timeit_decorator import timeit
+
+    @timeit(runs=3, workers=2)
+    async def my_func():
+        await asyncio.sleep(0.01)
+        return "done"
+
+    assert await my_func() == "done"
+
+
+def test_timeit_detailed(caplog):
+    from timeit_decorator import timeit
+    import logging
+
+    with caplog.at_level(logging.INFO, logger="timeit.decorator"):
+        @timeit(runs=3, workers=2, detailed=True)
+        def my_func(x):
+            time.sleep(0.01)
+            return x
+
+        assert my_func(42) == 42
+
+    assert "Average Time" in caplog.text
+    assert "42" in caplog.text
+
+
+def test_timeit_timeout():
+    from timeit_decorator import timeit
+
+    @timeit(timeout=0.3)
+    def my_func():
+        time.sleep(0.1)
+        return "ok"
+
+    assert my_func() == "ok"
+
+
+def test_timeit_enforce_timeout():
+    from timeit_decorator import timeit
+
+    @timeit(runs=2, workers=2, timeout=0.05, enforce_timeout=True)
+    def slow_func():
+        time.sleep(0.2)
+        return "too slow"
+
+    result = slow_func()
+    assert result is None or result == "too slow"
+
+
+def test_timeit_use_multiprocessing():
+    from timeit_decorator import timeit
+
+    decorated = timeit(runs=2, workers=2, use_multiprocessing=True)(cpu_intensive_task)
+    assert decorated() is not None
+
+
+def test_timeit_async_use_multiprocessing_warns(caplog):
+    from timeit_decorator import timeit
+    import logging
+
+    with caplog.at_level(logging.WARNING, logger="timeit.decorator"):
+        @timeit(use_multiprocessing=True)
         async def my_func():
             return "async"
 
-    assert await my_func() == "async"
+    assert "use_multiprocessing" in caplog.text
 
 
 # --- parameter validation ---
@@ -690,6 +769,7 @@ def test_fmt_duration_boundary_1s():
 def test_func_qualname_regular_function():
     def my_function():
         pass
+
     my_function.__module__ = "mymodule"
     my_function.__qualname__ = "my_function"
     assert _func_qualname(my_function) == "mymodule.my_function"
@@ -698,6 +778,7 @@ def test_func_qualname_regular_function():
 def test_func_qualname_main_module_included():
     def my_function():
         pass
+
     my_function.__module__ = "__main__"
     my_function.__qualname__ = "my_function"
     assert _func_qualname(my_function) == "__main__.my_function"
@@ -706,6 +787,7 @@ def test_func_qualname_main_module_included():
 def test_func_qualname_nested_class():
     def my_method():
         pass
+
     my_method.__module__ = "mymodule"
     my_method.__qualname__ = "MyClass.my_method"
     assert _func_qualname(my_method) == "mymodule.MyClass.my_method"
@@ -714,6 +796,7 @@ def test_func_qualname_nested_class():
 def test_func_qualname_no_module():
     def my_function():
         pass
+
     del my_function.__module__
     my_function.__qualname__ = "my_function"
     assert _func_qualname(my_function) == "my_function"
@@ -727,6 +810,7 @@ def test_single_run_output_uses_scaled_units(caplog):
         @timeit_sync()
         def quick():
             pass
+
         quick()
     assert "Exec:" in caplog.text
     # Should not contain raw scientific notation seconds like 1.8e-05s
@@ -739,6 +823,7 @@ def test_multi_run_output_uses_scaled_units(caplog):
         @timeit_sync(runs=3)
         def quick():
             pass
+
         quick()
     assert "Avg:" in caplog.text
     assert "Med:" in caplog.text
@@ -751,6 +836,7 @@ def test_detailed_single_run_qualname(caplog):
         @timeit_sync(detailed=True)
         def my_named_func():
             pass
+
         my_named_func()
     assert "my_named_func" in caplog.text
     assert "<function" not in caplog.text
@@ -762,6 +848,7 @@ def test_detailed_multi_run_qualname(caplog):
         @timeit_sync(runs=3, detailed=True)
         def my_named_func():
             pass
+
         my_named_func()
     assert "my_named_func" in caplog.text
     assert "<function" not in caplog.text
@@ -773,6 +860,7 @@ def test_detailed_args_shown_for_regular_function(caplog):
         @timeit_sync(detailed=True)
         def my_func(a, b):
             return a + b
+
         my_func(1, 2)
     assert "(1, 2)" in caplog.text
 
@@ -783,6 +871,7 @@ def test_detailed_args_shown_for_multi_run(caplog):
         @timeit_sync(runs=3, detailed=True)
         def my_func(a, b):
             return a + b
+
         my_func(3, 4)
     assert "(3, 4)" in caplog.text
 

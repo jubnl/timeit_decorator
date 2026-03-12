@@ -22,6 +22,7 @@ async def _run_raw(func, args, kwargs, logger):
 
 def _make_run_once(func, timeout, enforce_timeout, logger):
     """Create an async callable for a single timed execution (no timeout parameter on the async fn)."""
+
     async def run_once(args, kwargs):
         if timeout is None:
             return await _run_raw(func, args, kwargs, logger)

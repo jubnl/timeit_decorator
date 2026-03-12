@@ -19,6 +19,7 @@
 - [Installation](#installation)
 - [Usage](#usage)
   - [Basic Usage](#basic-usage)
+  - [Auto-Detecting Decorator](#auto-detecting-decorator)
   - [Efficient Execution for Single Run/Worker](#efficient-execution-for-single-runworker)
   - [Using Multiprocessing](#using-multiprocessing)
   - [Using Threading (Default)](#using-threading-default)
@@ -38,19 +39,17 @@
 `timeit_decorator` is a flexible Python library for benchmarking function execution. It supports repeated runs, parallel
 execution with threads or processes, detailed timing statistics, and native support for both sync and async functions.
 
-> **Deprecation notice**: The generic `@timeit` decorator (which auto-detected sync/async) is deprecated as of v2.x.
-> Use `@timeit_sync` for synchronous functions and `@timeit_async` for async functions instead.
-
 ## Features
 
 - **Multiple Runs and Workers**: Run functions multiple times with configurable concurrency.
-- **Sync and Async Support**: Use `@timeit_sync` or `@timeit_async` for full feature parity across sync and async code.
+- **Sync, Async, and Auto-Detecting**: Use `@timeit_sync` for synchronous functions, `@timeit_async` for coroutines, or `@timeit` to auto-detect at decoration time.
 - **Per-Task Timeout Handling**: Enforce or log timeouts individually for each execution.
 - **Multiprocessing and Threading**: Choose concurrency model for CPU- or I/O-bound workloads.
-- **Detailed Statistics**: Enable detailed=True to log timing metrics like average, median, min/max, stddev.
+- **Detailed Statistics**: Enable `detailed=True` to log a full table with average, median, min/max, stddev, and total time.
+- **Auto-Scaled Time Units**: Output automatically uses µs, ms, or s for readability.
 - **Instance, Class, and Static Method Support**: Fully supports method decorators (with limitations for
   multiprocessing).
-- **Structured Logging Only**: All output is logged using Python’s logging module.
+- **Structured Logging Only**: All output is logged using Python’s `logging` module.
 
 ##### Use Cases
 
@@ -108,6 +107,28 @@ def sample_function():
 # Call the decorated function
 sample_function()
 ```
+
+### Auto-Detecting Decorator
+
+`@timeit` inspects the decorated function at decoration time and automatically forwards to `@timeit_sync` or `@timeit_async`. It accepts all the same parameters:
+
+```python
+from timeit_decorator import timeit
+
+
+@timeit(runs=5, workers=2)
+def fetch_data(url: str) -> dict:
+    # sync implementation
+    pass
+
+
+@timeit(runs=3, workers=3, detailed=True)
+async def call_api(endpoint: str) -> dict:
+    # async implementation
+    pass
+```
+
+> Note: `use_multiprocessing=True` is silently ignored when decorating an async function — a warning is logged via the `"timeit.decorator"` logger.
 
 ### Efficient Execution for Single Run/Worker
 
@@ -213,17 +234,17 @@ sample_function("arg1", "arg2", c="value overwrite")
 This will output a detailed tabulated summary after the function execution, similar to the following:
 
 ```
-Function       <function sample_function at 0x000002612FFD9E40>
+Function       mymodule.sample_function
 Args           ('arg1', 'arg2')
 Kwargs         {'c': 'value overwrite'}
 Runs           5
 Workers        2
-Average Time   0.2s
-Median Time    0.19s
-Min Time       0.18s
-Max Time       0.22s
-Std Deviation  0.015s
-Total Time     1.0s
+Average Time   200.00ms
+Median Time    190.00ms
+Min Time       180.00ms
+Max Time       220.00ms
+Std Deviation  15.00ms
+Total Time     1.000s
 Timed Out      False
 ```
 
