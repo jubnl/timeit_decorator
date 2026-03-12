@@ -45,7 +45,7 @@ jobs:
             --token ${{ secrets.SONAR_TOKEN }}
 
       - name: Upload coverage reports to Codecov
-        uses: codecov-action@v5
+        uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
 
