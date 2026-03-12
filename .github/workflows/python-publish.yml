@@ -34,8 +34,6 @@ jobs:
           pytest --cov --cov-branch --cov-report=xml --junitxml=junit.xml -o junit_family=legacy
 
       - name: SonarQube Analysis
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: |
           pysonar \
             --sonar-host-url ${{ vars.SONAR_HOST_URL }} \
@@ -43,7 +41,8 @@ jobs:
             --sonar-sources ${{ vars.SONAR_SOURCES }} \
             --sonar-tests ${{ vars.SONAR_TESTS }} \
             --sonar-python-version ${{ vars.SONAR_PYTHON_VERSION }} \
-            --sonar-python-coverage-report-paths coverage.xml
+            --sonar-python-coverage-report-paths coverage.xml \
+            --token ${{ secrets.SONAR_TOKEN }}
 
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v5
