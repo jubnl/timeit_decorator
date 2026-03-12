@@ -62,7 +62,7 @@ jobs:
       - name: Build package
         run: |
           source .venv/bin/activate
-          .venv/bin/python -m build
+          python3 -m build
 
       - name: Publish package
         uses: pypa/gh-action-pypi-publish@release/v1
