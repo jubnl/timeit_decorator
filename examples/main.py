@@ -7,7 +7,7 @@ import asyncio
 import logging
 import time
 
-from timeit_decorator import timeit_sync, timeit_async
+from timeit_decorator import timeit
 
 logging.basicConfig(
     level=logging.DEBUG,
@@ -26,7 +26,7 @@ def section(title: str) -> None:
 # 1. Single run — fast path, no concurrency
 # ---------------------------------------------------------------------------
 
-@timeit_sync()
+@timeit()
 def single_run(n: int) -> int:
     time.sleep(0.05)
     return n * 2
@@ -36,7 +36,7 @@ def single_run(n: int) -> int:
 # 2. Multiple runs with threading
 # ---------------------------------------------------------------------------
 
-@timeit_sync(runs=6, workers=3)
+@timeit(runs=6, workers=3)
 def threaded_runs(n: int) -> int:
     time.sleep(0.1)
     return n
@@ -46,7 +46,7 @@ def threaded_runs(n: int) -> int:
 # 3. Multiple runs with multiprocessing — @decorator syntax (was PicklingError before v2.2.0)
 # ---------------------------------------------------------------------------
 
-@timeit_sync(runs=4, workers=4, use_multiprocessing=True)
+@timeit(runs=4, workers=4, use_multiprocessing=True)
 def cpu_bound(n: int) -> int:
     total = 0
     for i in range(500_000):
@@ -58,7 +58,7 @@ def cpu_bound(n: int) -> int:
 # 4. detailed=True — tabulated stats
 # ---------------------------------------------------------------------------
 
-@timeit_sync(runs=5, workers=3, detailed=True)
+@timeit(runs=5, workers=3, detailed=True)
 def detailed_output(n: int) -> int:
     time.sleep(0.05)
     return n
@@ -68,7 +68,7 @@ def detailed_output(n: int) -> int:
 # 5. Timeout — non-enforced (logs warning, lets function complete)
 # ---------------------------------------------------------------------------
 
-@timeit_sync(runs=3, timeout=0.05)
+@timeit(runs=3, timeout=0.05)
 def timeout_not_enforced() -> str:
     time.sleep(0.1)
     return "completed despite timeout"
@@ -78,7 +78,7 @@ def timeout_not_enforced() -> str:
 # 6. Timeout — enforced (cancels the future)
 # ---------------------------------------------------------------------------
 
-@timeit_sync(runs=4, workers=4, timeout=0.05, enforce_timeout=True)
+@timeit(runs=4, workers=4, timeout=0.05, enforce_timeout=True)
 def timeout_enforced() -> str:
     time.sleep(0.2)
     return "should be cancelled"
@@ -88,7 +88,7 @@ def timeout_enforced() -> str:
 # 7. Function returns None legitimately
 # ---------------------------------------------------------------------------
 
-@timeit_sync(runs=3)
+@timeit(runs=3)
 def returns_none() -> None:
     time.sleep(0.02)
 
@@ -97,7 +97,7 @@ def returns_none() -> None:
 # 8. Function raises an exception — multi-run (all fail → returns None)
 # ---------------------------------------------------------------------------
 
-@timeit_sync(runs=3, workers=3)
+@timeit(runs=3, workers=3)
 def always_raises() -> str:
     raise RuntimeError("intentional error")
 
@@ -110,14 +110,14 @@ class MyService:
     def __init__(self, multiplier: int):
         self.multiplier = multiplier
 
-    @timeit_sync(runs=4, workers=4, use_multiprocessing=True)
+    @timeit(runs=4, workers=4, use_multiprocessing=True)
     def compute(self, n: int) -> int:
         total = 0
         for i in range(500_000):
             total += i
         return total * self.multiplier + n
 
-    @timeit_sync(runs=4, workers=4)
+    @timeit(runs=4, workers=4)
     def io_task(self, n: int) -> int:
         time.sleep(0.05)
         return n * self.multiplier
@@ -127,7 +127,7 @@ class MyService:
 # 10. Async — basic single run
 # ---------------------------------------------------------------------------
 
-@timeit_async()
+@timeit()
 async def async_single() -> str:
     await asyncio.sleep(0.05)
     return "async done"
@@ -137,7 +137,7 @@ async def async_single() -> str:
 # 11. Async — multiple runs with semaphore-bounded concurrency
 # ---------------------------------------------------------------------------
 
-@timeit_async(runs=6, workers=3, detailed=True)
+@timeit(runs=6, workers=3, detailed=True)
 async def async_multi() -> str:
     await asyncio.sleep(0.05)
     return "async multi done"
@@ -147,7 +147,7 @@ async def async_multi() -> str:
 # 12. Async timeout — non-enforced (logs warning, awaits completion)
 # ---------------------------------------------------------------------------
 
-@timeit_async(runs=3, timeout=0.05, enforce_timeout=False)
+@timeit(runs=3, timeout=0.05, enforce_timeout=False)
 async def async_timeout_soft() -> str:
     await asyncio.sleep(0.1)
     return "finished late"
@@ -157,7 +157,7 @@ async def async_timeout_soft() -> str:
 # 13. Async timeout — enforced (cancels the coroutine)
 # ---------------------------------------------------------------------------
 
-@timeit_async(runs=4, workers=4, timeout=0.05, enforce_timeout=True)
+@timeit(runs=4, workers=4, timeout=0.05, enforce_timeout=True)
 async def async_timeout_hard() -> str:
     await asyncio.sleep(0.2)
     return "should be cancelled"
@@ -167,7 +167,7 @@ async def async_timeout_hard() -> str:
 # 14. Async — all runs fail
 # ---------------------------------------------------------------------------
 
-@timeit_async(runs=3, workers=3)
+@timeit(runs=3, workers=3)
 async def async_always_fails() -> str:
     raise ValueError("async intentional error")
 
@@ -176,7 +176,7 @@ async def async_always_fails() -> str:
 # 15. Single run + enforce_timeout=True (warns that enforce is a no-op here)
 # ---------------------------------------------------------------------------
 
-@timeit_sync(timeout=1.0, enforce_timeout=True)
+@timeit(timeout=1.0, enforce_timeout=True)
 def single_run_enforce_warn() -> str:
     return "fast"
 

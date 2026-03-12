@@ -2,6 +2,26 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.2.3] - 2026-03-13
+
+### Changed
+
+- **`@timeit` deprecation removed**: `@timeit` is now a first-class decorator again. The `DeprecationWarning` and `import warnings` have been removed. It auto-detects sync vs async at decoration time and forwards to `@timeit_sync` or `@timeit_async` respectively. Passing `use_multiprocessing=True` for an async function now logs a warning through the `"timeit.decorator"` logger instead of being silently ignored.
+- **Docstring rewritten for `@timeit`**: Full parameter documentation with `:param`/`:type`/`:raises` fields and usage examples for both sync and async cases.
+
+### Tests
+
+- Expanded `@timeit` test coverage: multiple runs with workers, `detailed=True`, timeout, `enforce_timeout`, and a check that `use_multiprocessing=True` on an async function emits a warning log.
+
+### Documentation
+
+- Removed deprecation notice for `@timeit` from README.
+- Updated Features section to list `@timeit` alongside `@timeit_sync` and `@timeit_async`.
+- Added `@timeit` usage example to README.
+- Updated `detailed=True` output example in README to reflect current format (qualname instead of `<function ...>` repr, auto-scaled time units).
+
+---
+
 ## [2.2.2] - 2026-03-12
 
 ### Changed
