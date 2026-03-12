@@ -27,11 +27,23 @@ jobs:
           python -m pip install --upgrade pip
           pip install build
           pip install .
-          pip install .[test]
+          pip install .[dev]
 
       - name: Run tests with pytest
         run: |
           pytest --cov --cov-branch --cov-report=xml --junitxml=junit.xml -o junit_family=legacy
+
+      - name: SonarQube Analysis
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: |
+          pysonar \
+            --sonar-host-url ${{ vars.SONAR_HOST_URL }} \
+            --sonar-project-key ${{ vars.SONAR_PROJECT_KEY }} \
+            --sonar-sources ${{ vars.SONAR_SOURCES }} \
+            --sonar-tests ${{ vars.SONAR_TESTS }} \
+            --sonar-python-version ${{ vars.SONAR_PYTHON_VERSION }} \
+            --sonar-python-coverage-report-paths coverage.xml
 
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v5

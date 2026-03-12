@@ -7,6 +7,7 @@
 [![Python versions](https://img.shields.io/pypi/pyversions/timeit-decorator.svg)](https://pypi.org/project/timeit-decorator/)
 [![Build](https://img.shields.io/github/actions/workflow/status/jubnl/timeit_decorator/.github%2Fworkflows%2Fpython-publish.yml)](https://github.com/jubnl/timeit_decorator/actions/workflows/python-publish.yml)
 [![codecov](https://codecov.io/gh/jubnl/timeit_decorator/graph/badge.svg?token=7KGVJM29YP)](https://codecov.io/gh/jubnl/timeit_decorator)
+[![Quality Gate Status](https://sonarqube.jubnl.ch/api/project_badges/measure?project=TimeIt-Decorator&metric=alert_status&token=sqb_757fa7ab8a465187953dbf6d82a2746ede4e1eda)](https://sonarqube.jubnl.ch/dashboard?id=TimeIt-Decorator)
 [![GitHub Issues](https://img.shields.io/github/issues/jubnl/timeit_decorator)](https://github.com/jubnl/timeit_decorator/issues)
 ![GitHub Repo stars](https://img.shields.io/github/stars/jubnl/timeit_decorator)
 
@@ -37,10 +38,13 @@
 `timeit_decorator` is a flexible Python library for benchmarking function execution. It supports repeated runs, parallel
 execution with threads or processes, detailed timing statistics, and native support for both sync and async functions.
 
+> **Deprecation notice**: The generic `@timeit` decorator (which auto-detected sync/async) is deprecated as of v2.x.
+> Use `@timeit_sync` for synchronous functions and `@timeit_async` for async functions instead.
+
 ## Features
 
 - **Multiple Runs and Workers**: Run functions multiple times with configurable concurrency.
-- **Sync and Async Support**: Use @timeit_sync or @timeit_async for full feature parity across sync and async code.
+- **Sync and Async Support**: Use `@timeit_sync` or `@timeit_async` for full feature parity across sync and async code.
 - **Per-Task Timeout Handling**: Enforce or log timeouts individually for each execution.
 - **Multiprocessing and Threading**: Choose concurrency model for CPU- or I/O-bound workloads.
 - **Detailed Statistics**: Enable detailed=True to log timing metrics like average, median, min/max, stddev.
@@ -220,6 +224,7 @@ Min Time       0.18s
 Max Time       0.22s
 Std Deviation  0.015s
 Total Time     1.0s
+Timed Out      False
 ```
 
 ### Timeout Handling
@@ -272,14 +277,12 @@ fast_abort()
 
 `timeit_decorator` fully supports asynchronous functions via the `@timeit_async` decorator.
 
-You can configure it with the same options as the sync version, including:
+You can configure it with the same options as the sync version, **except `use_multiprocessing`** (async execution
+uses `asyncio.Semaphore` for concurrency and does not support multiprocessing):
 
 - `runs`, `workers`
 - `timeout`, `enforce_timeout`
 - `detailed`, `log_level`
-
-Async execution uses an internal `asyncio.Semaphore` to manage concurrency and supports both enforced and non-enforced
-timeouts via `asyncio.wait_for()` and `asyncio.shield()`.
 
 ```python
 import asyncio
@@ -295,8 +298,8 @@ async def async_task():
 asyncio.run(async_task())
 ```
 
-> If `enforce_timeout=False`, timeouts are logged but the coroutine is allowed to finish using `asyncio.shield()`.
-> If `enforce_timeout=True`, the task is cancelled if it exceeds the timeout limit.
+> If `enforce_timeout=False`, a warning is logged if the timeout is exceeded, but the coroutine runs to completion.
+> If `enforce_timeout=True`, the task is cancelled via `asyncio.wait_for()` if it exceeds the timeout limit.
 
 ## Limitations
 
@@ -320,7 +323,7 @@ method is not the same object as expected.
 # This will raise a PicklingError when executed
 class ExampleClass:
     @staticmethod
-    @timeit(use_multiprocessing=True, runs=2)
+    @timeit_sync(use_multiprocessing=True, runs=2)
     def example_static_method():
         # method implementation
         pass
@@ -343,7 +346,7 @@ limitations, please feel free to report them in the project's issue tracker.
 
 ## Requirements
 
-`timeit_decorator` requires Python 3.7+
+`timeit_decorator` requires Python 3.9+
 
 ## Contributing
 
@@ -352,7 +355,7 @@ details.
 
 ## License
 
-`timeit_decorator` is released under the [MIT License](./LICENSE).
+`timeit_decorator` is released under the [GPL-3.0 License](./LICENSE).
 
 ## Changelog
 
