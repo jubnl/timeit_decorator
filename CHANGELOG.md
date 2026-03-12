@@ -2,7 +2,33 @@
 
 All notable changes to this project will be documented in this file.
 
-## [2.2.0] - 2026-03-12
+## [2.2.2] - 2026-03-12
+
+### Changed
+
+- **Auto-scaling time units in all output**: Timing values are now displayed in the most readable unit instead of always using seconds.
+  - `< 1ms` → microseconds (e.g. `18.83µs`)
+  - `>= 1ms` and `< 1s` → milliseconds (e.g. `12.34ms`)
+  - `>= 1s` → seconds (e.g. `2.045s`)
+
+  This applies everywhere a duration is formatted: the single-run `Exec:` line, the multi-run `Avg:`/`Med:` summary line, and every time field in the `detailed=True` table.
+
+- **Fully qualified function name in `detailed=True` output**: The `Function` row now shows `module.qualname` (e.g. `mymodule.MyClass.my_method`) instead of the raw `repr()` of the function object (e.g. `<function my_method at 0x...>`).
+
+### Bug Fixes
+
+- **`Args` no longer empty in `detailed=True` output for regular functions**: `args[1:]` was unconditionally stripping the first argument, which was intended to hide `self` for instance methods but silently dropped the first real argument for regular functions. The slice is now only applied when the first element is a bound instance (`hasattr(args[0], func.__name__)`), so both cases are handled correctly.
+
+### Tests
+
+- Added tests for `_fmt_duration` covering µs/ms/s ranges and exact boundary values (1ms, 1s).
+- Added tests for `_func_qualname` covering regular functions, `__main__` module, nested class methods, and missing `__module__` attribute.
+- Added integration tests via `caplog` verifying that log output uses scaled units (no scientific notation) and shows qualname instead of function repr.
+- Added regression tests for `Args` display: args shown correctly for single-run and multi-run regular functions, and `self` correctly stripped for instance methods.
+
+---
+
+## [2.2.1] - 2026-03-12
 
 ### Bug Fixes
 
