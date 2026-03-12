@@ -23,6 +23,21 @@
 ------------------------------------------------------------
   4. detailed=True output (runs=5, workers=3)
 ------------------------------------------------------------
+2026-03-12 23:52:08 [INFO] (timeit.decorator) cpu_bound: Avg: 10.12ms, Med: 8.80ms
+2026-03-12 23:52:08 [DEBUG] (timeit.decorator) Starting threading tasks with 3 workers
+2026-03-12 23:52:08 [INFO] (timeit.decorator) Function       __main__.detailed_output
+Args           (99,)
+Kwargs         {}
+Runs           5
+Workers        3
+Average Time   50.08ms
+Median Time    50.07ms
+Min Time       50.06ms
+Max Time       50.12ms
+Std Deviation  22.36µs
+Total Time     250.39ms
+Timed Out      False
+2026-03-12 23:52:08 [DEBUG] (timeit.decorator) Starting threading tasks with 1 workers
   result: 99
 
 ------------------------------------------------------------
@@ -78,6 +93,8 @@ Timed Out      False
 ------------------------------------------------------------
   9a. Instance method — multiprocessing
 ------------------------------------------------------------
+2026-03-12 23:52:08 [INFO] (timeit.decorator) compute: Avg: 14.64ms, Med: 16.06ms
+2026-03-12 23:52:08 [DEBUG] (timeit.decorator) Starting threading tasks with 4 workers
   result: 249999500001
 
 ------------------------------------------------------------
