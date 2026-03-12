@@ -1,14 +1,15 @@
+import importlib
 import logging
 import multiprocessing
+import sys
 import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
 from functools import wraps
 from multiprocessing import Pool
-from statistics import stdev, median, mean
 from typing import Optional, Callable
 
-from tabulate import tabulate
+from ._shared import _NO_RESULT, _single_run_output, _multi_run_output, _first_valid_result
 
 
 def _multiprocessing_instance_method_call(instance, method_name, *args, **kwargs):
@@ -18,21 +19,30 @@ def _multiprocessing_instance_method_call(instance, method_name, *args, **kwargs
 
 
 def _timeit_worker(worker_args):
-    """Worker function that executes a function and applies a timeout."""
+    """Worker function that executes a function and records execution time."""
     logger = logging.getLogger("timeit.decorator._timeit_worker")
     try:
-        # Distinguish between instance method and regular function
-        if isinstance(worker_args, tuple) and isinstance(worker_args[1], str):
+        if isinstance(worker_args[0], str):
+            # Module-level function referenced by module name + qualname (multiprocessing path).
+            # Looking up by name retrieves the wrapper, whose non-MainProcess short-circuit
+            # then calls through to the original function directly.
+            module_name, qualname, func_args, func_kwargs, timeout, enforce_timeout = worker_args
+            module = sys.modules.get(module_name) or importlib.import_module(module_name)
+            obj = module
+            for part in qualname.split('.'):
+                obj = getattr(obj, part)
+            wrapped_func = lambda: obj(*func_args, **func_kwargs)
+        elif isinstance(worker_args[1], str):
+            # Instance method referenced by name on its instance.
             instance, method_name, method_args, method_kwargs, timeout, enforce_timeout = worker_args
             wrapped_func = lambda: getattr(instance, method_name)(*method_args, **method_kwargs)
         else:
+            # Regular function object (threading path only).
             func, func_args, func_kwargs, timeout, enforce_timeout = worker_args
             wrapped_func = lambda: func(*func_args, **func_kwargs)
 
-        # Enforce timeout using a thread-based executor
         timed_out = False
 
-        # Time the function execution
         execution_start = time.time()
         func_result = wrapped_func()
         execution_time = time.time() - execution_start
@@ -47,7 +57,99 @@ def _timeit_worker(worker_args):
 
     except Exception as e:
         logging.error(f"Error in _timeit_worker: {e}")
-        return None, None, None
+        return None, _NO_RESULT, None
+
+
+def _collect_threaded_results(futures, enforce_timeout, timeout, logger):
+    """Collect results from thread futures, applying optional timeout enforcement."""
+    results = []
+    for i, future in enumerate(futures):
+        try:
+            result = future.result(timeout=timeout) if enforce_timeout and timeout is not None else future.result()
+            results.append(result)
+        except TimeoutError:
+            logger.warning(f"Function execution {i} exceeded timeout of {timeout}s and was canceled.")
+            future.cancel()
+            results.append((timeout, _NO_RESULT, True))
+        except Exception as e:
+            logger.error(f"Function execution {i} failed with: {e}")
+            results.append((None, _NO_RESULT, None))
+    return results
+
+
+def _build_worker_args(func, args, kwargs, runs, timeout, enforce_timeout, use_multiprocessing=False):
+    """Build per-run worker argument tuples."""
+    if args and hasattr(args[0], func.__name__):
+        return [(args[0], func.__name__, args[1:], kwargs, timeout, enforce_timeout) for _ in range(runs)]
+    if use_multiprocessing and '<locals>' not in func.__qualname__:
+        # Pass by module + qualname instead of function object to avoid PicklingError when the
+        # decorator syntax (@timeit_sync) replaces the module-level name with the wrapper.
+        # Only applicable to module-level functions; nested/local functions fall through to the
+        # function-object path (which may fail to pickle, matching pre-existing behaviour).
+        return [(func.__module__, func.__qualname__, args, kwargs, timeout, enforce_timeout) for _ in range(runs)]
+    return [(func, args, kwargs, timeout, enforce_timeout) for _ in range(runs)]
+
+
+def _execute_parallel_runs(worker_args, workers, use_multiprocessing, enforce_timeout, timeout, logger):
+    """Run worker tasks using thread pool or process pool and return results."""
+    mode = 'multiprocessing' if use_multiprocessing else 'threading'
+    logger.debug(f"Starting {mode} tasks with {workers} workers")
+    if use_multiprocessing:
+        if enforce_timeout:
+            raise ValueError("enforce_timeout=True is not supported with use_multiprocessing=True")
+        with Pool(workers) as pool:
+            return pool.map(_timeit_worker, worker_args)
+    with ThreadPoolExecutor(max_workers=workers) as executor:
+        futures = [executor.submit(_timeit_worker, wa) for wa in worker_args]
+        return _collect_threaded_results(futures, enforce_timeout, timeout, logger)
+
+
+def _run_single_and_log(func, args, kwargs, log_level, detailed, timeout, enforce_timeout, logger):
+    """Execute func once (fast path), warn if enforce_timeout was set, and log the result."""
+    if enforce_timeout and timeout:
+        logger.warning(
+            "enforce_timeout=True is ignored when runs=1 and workers=1 in sync mode — no parallelism or cancellation is possible.")
+    start_time = time.time()
+    result = func(*args, **kwargs)
+    execution_time = time.time() - start_time
+    logger.log(log_level, _single_run_output(func, args, kwargs, execution_time, detailed))
+    return result
+
+
+def _sync_decorator(func, runs, workers, log_level, use_multiprocessing, detailed, timeout, enforce_timeout):
+    """Build the sync wrapper for a given function and timing configuration."""
+    logger = logging.getLogger("timeit.decorator")
+
+    if not logging.getLogger().hasHandlers():
+        logging.basicConfig(
+            level=log_level,
+            format="%(asctime)s [%(levelname)s] (%(name)s) %(message)s",
+            datefmt="%Y-%m-%d %H:%M:%S"
+        )
+
+    @wraps(func)
+    def sync_wrapper(*args, **kwargs):
+        if threading.current_thread() is not threading.main_thread() or \
+                multiprocessing.current_process().name != 'MainProcess':
+            return func(*args, **kwargs)
+
+        if runs == 1 and workers == 1:
+            return _run_single_and_log(func, args, kwargs, log_level, detailed, timeout, enforce_timeout, logger)
+
+        worker_args = _build_worker_args(func, args, kwargs, runs, timeout, enforce_timeout, use_multiprocessing)
+        results = _execute_parallel_runs(worker_args, workers, use_multiprocessing, enforce_timeout, timeout, logger)
+
+        times = [r[0] for r in results if r and r[0] is not None]
+        valid_results = [r[1] for r in results if r and r[1] is not _NO_RESULT]
+
+        if not times:
+            logger.error(f"{func.__name__}: All function executions failed or returned None.")
+            return None if not detailed else []
+
+        logger.log(log_level, _multi_run_output(func, args, kwargs, runs, workers, times, results, detailed))
+        return _first_valid_result(valid_results)
+
+    return sync_wrapper
 
 
 def timeit_sync(
@@ -108,148 +210,12 @@ def timeit_sync(
     if runs < 1 or workers < 1:
         raise ValueError("Both runs and workers must be at least 1")
 
-    # Ensure workers do not exceed number of runs
     workers = min(workers, runs)
 
     if log_level is None:
         log_level = logging.INFO
 
     def decorator(func: Callable):
-        logger = logging.getLogger("timeit.decorator")
-        logger.setLevel(log_level)
-
-        if not logging.getLogger().hasHandlers():
-            logging.basicConfig(
-                level=log_level,
-                format="%(asctime)s [%(levelname)s] (%(name)s) %(message)s",
-                datefmt="%Y-%m-%d %H:%M:%S"
-            )
-
-        @wraps(func)
-        def sync_wrapper(*args, **kwargs):
-
-            # Prevent nested decorators inside thread/process workers
-            if threading.current_thread() is not threading.main_thread():
-                return func(*args, **kwargs)
-            if multiprocessing.current_process().name != 'MainProcess':
-                return func(*args, **kwargs)
-
-            # Fast path: single run, no concurrency
-            if runs == 1 and workers == 1:
-                if enforce_timeout and timeout:
-                    logger.warning(
-                        "enforce_timeout=True is ignored when runs=1 and workers=1 in sync mode — no parallelism or cancellation is possible.")
-                start_time = time.time()
-                result = func(*args, **kwargs)
-                execution_time = time.time() - start_time
-                if detailed:
-                    output = tabulate([
-                        ["Function", func],
-                        ["Args", args[1:]],
-                        ["Kwargs", kwargs],
-                        ["Duration", f"{execution_time}s"]
-                    ], tablefmt="plain")
-                else:
-                    output = f"{func.__name__}: Exec: {execution_time:.6f}s"
-                logger.log(log_level, output)
-                return result
-
-            # Determine if function is an instance method
-            is_instance_method = args and hasattr(args[0], func.__name__)
-
-            if is_instance_method:
-                # Prepare arguments for instance method execution
-                method_target = args[0]
-                worker_args = [
-                    (method_target, func.__name__, args[1:], kwargs, timeout, enforce_timeout)
-                    # Ensure correct argument structure
-                    for _ in range(runs)
-                ]
-            else:
-                # Prepare arguments for function execution
-                worker_args = [(func, args, kwargs, timeout, enforce_timeout) for _ in range(runs)]
-
-            logger.debug(
-                f"Starting {'multiprocessing' if use_multiprocessing else 'threading'} tasks with {workers} workers")
-
-            # Choose between threading and multiprocessing
-            if use_multiprocessing:
-                if enforce_timeout:
-                    raise ValueError("enforce_timeout=True is not supported with use_multiprocessing=True")
-                with Pool(workers) as pool:
-                    results = pool.map(_timeit_worker, worker_args)
-            else:
-                with ThreadPoolExecutor(max_workers=workers) as executor:
-                    futures = [executor.submit(_timeit_worker, args) for args in worker_args]
-
-                    results = []
-
-                    if enforce_timeout and timeout:
-                        for i, future in enumerate(futures):
-                            try:
-                                result = future.result(timeout=timeout)
-                                results.append(result)
-                            except TimeoutError:
-                                logger.warning(
-                                    f"Function execution {i} exceeded timeout of {timeout}s and was canceled.")
-                                future.cancel()
-                                results.append((timeout, None, True))
-                            except Exception as e:
-                                logger.error(f"Function execution {i} failed with: {e}")
-                                results.append((None, None, None))
-                    else:
-                        for i, future in enumerate(futures):
-                            try:
-                                results.append(future.result())
-                            except Exception as e:
-                                logger.error(f"Function execution {i} failed with: {e}")
-                                results.append((None, None, None))
-
-            # Extract timing and result data
-            times = [r[0] for r in results if r and r[0] is not None]
-            valid_results = [r[1] for r in results if r and r[1] is not None]
-            timed_out = [r[2] for r in results if r and r[2] is not None]
-
-            if not times:
-                logger.error(f"{func.__name__}: All function executions failed or returned None.")
-                return None if not detailed else []
-
-            # Compute statistics
-            avg_time = mean(times)
-            med_time = median(times)
-            min_time = min(times)
-            max_time = max(times)
-            std_dev = stdev(times) if len(times) > 1 else 0
-            total_time = sum(times)
-
-            if detailed:
-                stats_data = [
-                    ["Function", func],
-                    ["Args", args[1:]],
-                    ["Kwargs", kwargs],
-                    ["Runs", runs],
-                    ["Workers", workers],
-                    ["Average Time", f"{avg_time}s"],
-                    ["Median Time", f"{med_time}s"],
-                    ["Min Time", f"{min_time}s"],
-                    ["Max Time", f"{max_time}s"],
-                    ["Std Deviation", f"{std_dev}s"],
-                    ["Total Time", f"{total_time}s"],
-                    ["Timed Out", any(timed_out)],
-                ]
-                output = tabulate(stats_data, tablefmt="plain")
-            else:
-                output = f"{func.__name__}: Avg: {avg_time:.3f}s, Med: {med_time:.3f}s"
-
-            logger.log(log_level, output)
-
-            # Return the first successful result
-            for result in valid_results:
-                if result is not None:
-                    return result
-
-            return None  # Fallback if all runs failed
-
-        return sync_wrapper
+        return _sync_decorator(func, runs, workers, log_level, use_multiprocessing, detailed, timeout, enforce_timeout)
 
     return decorator

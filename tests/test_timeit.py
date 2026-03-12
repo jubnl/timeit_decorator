@@ -1,10 +1,13 @@
 import asyncio
 import logging
+import pickle
+import threading
 import time
 
 import pytest
 
 from timeit_decorator import timeit_sync, timeit_async
+from timeit_decorator._shared import _NO_RESULT
 
 pytestmark = pytest.mark.asyncio
 logging.basicConfig(
@@ -97,6 +100,11 @@ class SampleClass:
 def slow_cpu_task():
     time.sleep(0.2)  # Exceeds timeout
     return "should timeout"
+
+
+@timeit_sync(runs=2, workers=2, use_multiprocessing=True)
+def _mp_decorated_func():
+    return "ok"
 
 
 def test_multiple_workers_multiple_runs():
@@ -405,3 +413,251 @@ async def test_async_multiple_runs():
 
     result = await async_func()
     assert result == "done"
+
+
+# --- detailed=True output paths ---
+
+def test_detailed_single_run():
+    @timeit_sync(detailed=True)
+    def my_func(a, b):
+        return a + b
+
+    assert my_func(1, 2) == 3
+
+
+def test_detailed_multiple_runs():
+    @timeit_sync(runs=3, workers=2, detailed=True)
+    def my_func():
+        time.sleep(0.01)
+        return "done"
+
+    assert my_func() == "done"
+
+
+@pytest.mark.asyncio
+async def test_async_detailed_multiple_runs():
+    @timeit_async(runs=3, workers=2, detailed=True)
+    async def my_func():
+        await asyncio.sleep(0.01)
+        return "done"
+
+    assert await my_func() == "done"
+
+
+# --- deprecated @timeit dispatcher ---
+
+def test_timeit_deprecated_sync():
+    from timeit_decorator import timeit
+
+    with pytest.warns(DeprecationWarning):
+        @timeit()
+        def my_func():
+            return "sync"
+
+    assert my_func() == "sync"
+
+
+@pytest.mark.asyncio
+async def test_timeit_deprecated_async():
+    from timeit_decorator import timeit
+
+    with pytest.warns(DeprecationWarning):
+        @timeit()
+        async def my_func():
+            return "async"
+
+    assert await my_func() == "async"
+
+
+# --- parameter validation ---
+
+def test_timeit_sync_invalid_runs():
+    with pytest.raises(ValueError):
+        timeit_sync(runs=0)(lambda: None)
+
+
+def test_timeit_sync_invalid_workers():
+    with pytest.raises(ValueError):
+        timeit_sync(workers=0)(lambda: None)
+
+
+def test_timeit_sync_log_level_none():
+    @timeit_sync(log_level=None)
+    def my_func():
+        return "done"
+
+    assert my_func() == "done"
+
+
+def test_timeit_async_invalid_runs():
+    with pytest.raises(ValueError):
+        timeit_async(runs=0)(lambda: None)
+
+
+def test_timeit_async_log_level_none():
+    @timeit_async(log_level=None)
+    async def my_func():
+        return "done"
+
+    # just ensure decoration succeeds (validation only)
+    assert my_func is not None
+
+
+# --- async error handling ---
+
+@pytest.mark.asyncio
+async def test_async_error_handling_single_run():
+    @timeit_async()
+    async def failing_func():
+        raise ValueError("async error")
+
+    result = await failing_func()
+    assert result is None
+
+
+@pytest.mark.asyncio
+async def test_async_error_handling_with_timeout():
+    @timeit_async(timeout=1.0, enforce_timeout=True)
+    async def failing_func():
+        raise ValueError("async error with timeout")
+
+    result = await failing_func()
+    assert result is None
+
+
+# --- async timeout: task completes before timeout fires ---
+
+@pytest.mark.asyncio
+async def test_async_task_completes_before_timeout_non_enforced():
+    @timeit_async(timeout=1.0, enforce_timeout=False)
+    async def quick_func():
+        await asyncio.sleep(0.01)
+        return "done"
+
+    assert await quick_func() == "done"
+
+
+@pytest.mark.asyncio
+async def test_async_task_completes_before_timeout_enforced():
+    @timeit_async(timeout=1.0, enforce_timeout=True)
+    async def quick_func():
+        await asyncio.sleep(0.01)
+        return "done"
+
+    assert await quick_func() == "done"
+
+
+# --- async: all runs fail (exception path, duration=None) ---
+
+@pytest.mark.asyncio
+async def test_async_all_runs_fail():
+    @timeit_async(runs=3, workers=2)
+    async def always_fails():
+        raise RuntimeError("always fails")
+
+    assert await always_fails() is None
+
+
+@pytest.mark.asyncio
+async def test_async_all_runs_fail_detailed():
+    @timeit_async(runs=3, workers=2, detailed=True)
+    async def always_fails():
+        raise RuntimeError("always fails")
+
+    assert await always_fails() == []
+
+
+# --- sync: timeout exceeded warning in multi-run (non-enforced) ---
+
+def test_sync_timeout_exceeded_multi_run():
+    @timeit_sync(runs=2, timeout=0.05)
+    def slow_func():
+        time.sleep(0.1)
+        return "done"
+
+    assert slow_func() == "done"
+
+
+# --- sync: all runs fail (exception path, duration=None) ---
+
+def test_sync_all_runs_fail():
+    @timeit_sync(runs=3, workers=3)
+    def always_fails():
+        raise RuntimeError("always fails")
+
+    assert always_fails() is None
+
+
+# --- multiprocessing + enforce_timeout raises ValueError ---
+
+def test_multiprocessing_decorator_syntax():
+    """@timeit_sync(use_multiprocessing=True) must not raise PicklingError."""
+    assert _mp_decorated_func() == "ok"
+
+
+def test_sync_enforce_timeout_with_multiprocessing_raises():
+    with pytest.raises(ValueError, match="enforce_timeout"):
+        @timeit_sync(runs=2, workers=2, use_multiprocessing=True, enforce_timeout=True)
+        def my_func():
+            return "done"
+
+        my_func()
+
+
+# --- sync: enforce_timeout=True on single run emits warning ---
+
+def test_sync_enforce_timeout_single_run_warning():
+    @timeit_sync(timeout=1.0, enforce_timeout=True)
+    def quick_func():
+        return "done"
+
+    assert quick_func() == "done"
+
+
+# --- _NO_RESULT sentinel: repr and pickle round-trip ---
+
+def test_no_result_repr():
+    assert repr(_NO_RESULT) == "_NO_RESULT"
+
+
+def test_no_result_pickle_roundtrip():
+    unpickled = pickle.loads(pickle.dumps(_NO_RESULT))
+    assert unpickled is _NO_RESULT
+
+
+# --- non-main-thread short-circuit paths ---
+
+def test_sync_non_main_thread_short_circuits():
+    """Decorated sync function called from a non-main thread should bypass timing."""
+    results = []
+
+    @timeit_sync(runs=3)
+    def my_func():
+        return "done"
+
+    def run():
+        results.append(my_func())
+
+    t = threading.Thread(target=run)
+    t.start()
+    t.join()
+    assert results[0] == "done"
+
+
+def test_async_non_main_thread_short_circuits():
+    """Decorated async function called from a non-main thread should bypass timing."""
+    results = []
+
+    @timeit_async(runs=3)
+    async def my_func():
+        return "done"
+
+    def run():
+        loop = asyncio.new_event_loop()
+        results.append(loop.run_until_complete(my_func()))
+        loop.close()
+
+    t = threading.Thread(target=run)
+    t.start()
+    t.join()
+    assert results[0] == "done"
