@@ -2,6 +2,23 @@ from statistics import mean, median, stdev
 
 from tabulate import tabulate
 
+
+def _fmt_duration(seconds: float) -> str:
+    if seconds < 1e-3:
+        return f"{seconds * 1e6:.2f}µs"
+    if seconds < 1.0:
+        return f"{seconds * 1e3:.2f}ms"
+    return f"{seconds:.3f}s"
+
+
+def _func_qualname(func) -> str:
+    module = getattr(func, "__module__", None)
+    qualname = getattr(func, "__qualname__", func.__name__)
+    if not module:
+        return qualname
+    return f"{module}.{qualname}"
+
+
 class _NoResultType:
     """Sentinel singleton that survives pickle round-trips (needed for multiprocessing)."""
     _instance = None
@@ -26,12 +43,12 @@ _NO_RESULT = _NoResultType()
 def _single_run_output(func, args, kwargs, duration, detailed):
     """Build log output for a single execution."""
     if not detailed:
-        return f"{func.__name__}: Exec: {duration:.6f}s"
+        return f"{func.__name__}: Exec: {_fmt_duration(duration)}"
     return tabulate([
-        ["Function", func],
+        ["Function", _func_qualname(func)],
         ["Args", args[1:]],
         ["Kwargs", kwargs],
-        ["Duration", f"{duration}s"],
+        ["Duration", _fmt_duration(duration)],
     ], tablefmt="plain")
 
 
@@ -40,19 +57,19 @@ def _multi_run_output(func, args, kwargs, runs, workers, times, results, detaile
     avg_time = mean(times)
     med_time = median(times)
     if not detailed:
-        return f"{func.__name__}: Avg: {avg_time:.3f}s, Med: {med_time:.3f}s"
+        return f"{func.__name__}: Avg: {_fmt_duration(avg_time)}, Med: {_fmt_duration(med_time)}"
     stats_data = [
-        ["Function", func],
+        ["Function", _func_qualname(func)],
         ["Args", args[1:]],
         ["Kwargs", kwargs],
         ["Runs", runs],
         ["Workers", workers],
-        ["Average Time", f"{avg_time}s"],
-        ["Median Time", f"{med_time}s"],
-        ["Min Time", f"{min(times)}s"],
-        ["Max Time", f"{max(times)}s"],
-        ["Std Deviation", f"{stdev(times) if len(times) > 1 else 0}s"],
-        ["Total Time", f"{sum(times)}s"],
+        ["Average Time", _fmt_duration(avg_time)],
+        ["Median Time", _fmt_duration(med_time)],
+        ["Min Time", _fmt_duration(min(times))],
+        ["Max Time", _fmt_duration(max(times))],
+        ["Std Deviation", _fmt_duration(stdev(times)) if len(times) > 1 else "0.00µs"],
+        ["Total Time", _fmt_duration(sum(times))],
         ["Timed Out", any(r[2] for r in results if r)],
     ]
     return tabulate(stats_data, tablefmt="plain")
