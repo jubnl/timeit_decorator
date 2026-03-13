@@ -8,13 +8,14 @@ from .sync_wrapper import timeit_sync
 
 
 def timeit(
-        runs: int = 1,
-        workers: int = 1,
-        log_level: Optional[int] = logging.INFO,
-        use_multiprocessing: bool = False,
-        detailed: bool = False,
-        timeout: Optional[float] = None,
-        enforce_timeout: bool = False
+    func: Optional[Callable] = None,
+    runs: int = 1,
+    workers: int = 1,
+    log_level: Optional[int] = logging.INFO,
+    use_multiprocessing: bool = False,
+    detailed: bool = False,
+    timeout: Optional[float] = None,
+    enforce_timeout: bool = False
 ):
     """
     Auto-detecting decorator that times both sync and async functions.
@@ -82,5 +83,8 @@ def timeit(
             enforce_timeout=enforce_timeout,
             use_multiprocessing=use_multiprocessing
         )(func)
+
+    if func is not None:
+        return decorator(func)
 
     return decorator

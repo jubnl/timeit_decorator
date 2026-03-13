@@ -26,7 +26,7 @@ def section(title: str) -> None:
 # 1. Single run — fast path, no concurrency
 # ---------------------------------------------------------------------------
 
-@timeit()
+@timeit
 def single_run(n: int) -> int:
     time.sleep(0.05)
     return n * 2
@@ -127,7 +127,7 @@ class MyService:
 # 10. Async — basic single run
 # ---------------------------------------------------------------------------
 
-@timeit()
+@timeit
 async def async_single() -> str:
     await asyncio.sleep(0.05)
     return "async done"

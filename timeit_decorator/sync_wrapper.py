@@ -153,13 +153,14 @@ def _sync_decorator(func, runs, workers, log_level, use_multiprocessing, detaile
 
 
 def timeit_sync(
-        runs: int = 1,
-        workers: int = 1,
-        log_level: Optional[int] = logging.INFO,
-        use_multiprocessing: bool = False,
-        detailed: bool = False,
-        timeout: Optional[float] = None,
-        enforce_timeout: bool = False
+    func: Optional[Callable] = None,
+    runs: int = 1,
+    workers: int = 1,
+    log_level: Optional[int] = logging.INFO,
+    use_multiprocessing: bool = False,
+    detailed: bool = False,
+    timeout: Optional[float] = None,
+    enforce_timeout: bool = False
 ):
     """
         Time the execution of a function with options for multiple runs and workers.
@@ -217,5 +218,8 @@ def timeit_sync(
 
     def decorator(func: Callable):
         return _sync_decorator(func, runs, workers, log_level, use_multiprocessing, detailed, timeout, enforce_timeout)
+
+    if func is not None:
+        return decorator(func)
 
     return decorator

@@ -100,12 +100,13 @@ def _async_decorator(func, runs, workers, log_level, detailed, timeout, enforce_
 
 
 def timeit_async(
-        runs: int = 1,
-        workers: int = 1,
-        log_level: Optional[int] = logging.INFO,
-        detailed: bool = False,
-        timeout: Optional[float] = None,
-        enforce_timeout: bool = False
+    func: Optional[Callable] = None,
+    runs: int = 1,
+    workers: int = 1,
+    log_level: Optional[int] = logging.INFO,
+    detailed: bool = False,
+    timeout: Optional[float] = None,
+    enforce_timeout: bool = False
 ):
     """
         Time the execution of an async function with options for multiple runs and workers.
@@ -147,5 +148,8 @@ def timeit_async(
 
     def decorator(func: Callable):
         return _async_decorator(func, runs, workers, log_level, detailed, timeout, enforce_timeout)
+
+    if func is not None:
+        return decorator(func)
 
     return decorator
